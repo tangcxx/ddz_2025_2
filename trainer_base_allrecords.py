@@ -1,3 +1,4 @@
+#使用所有样本
 #%%
 import keras as k
 import numpy as np 
@@ -20,7 +21,7 @@ class PARAM:
 
 from bot_base import BOT
 from arena import ARENA
-param = PARAM("model_base", ARENA, BOT, iterstart=0)
+param = PARAM("model_base_allrecords", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
@@ -29,11 +30,19 @@ def selfplay(args):
     arena = param.ARENA(RECORD=True)
     arena.registerbot([bot, bot, bot])
     arena.wholegame()
-    nmoves = len(arena.records)
-    idx = np.random.randint(nmoves)
-    data = param.BOT.getdata(arena.records[idx])
     y = 1 if arena.winner == 0 else 0
-    return [y, data]
+    
+    ys, xs = [], []
+    for i, record in enumerate(arena.records):
+        ys.append(y)
+        xs.append(param.BOT.getdata(record))
+    ys = np.array(ys)
+    xs = np.concatenate(xs)
+    return [ys, xs]
+    # nmoves = len(arena.records)
+    # idx = np.random.randint(nmoves)
+    # data = param.BOT.getdata(arena.records[idx])
+    # return [y, data]
 
 def train():
     mp.set_start_method('spawn')
@@ -48,11 +57,11 @@ def train():
                       optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
     while True:
         epsilon = max(param.epsilonstep ** iter, param.epsilonmin)
-        res = p.map(selfplay, [(model.get_weights(), epsilon)] * param.batch_size)
-        y = np.array([r[0] for r in res])
-        cards = np.concatenate([r[1] for r in res])
+        res = p.map(selfplay, [(model.get_weights(), epsilon)] * 8)
+        ys = np.concatenate([r[0] for r in res])
+        xs = np.concatenate([r[1] for r in res])
 
-        loss1 = bce(y, model(cards)[:,0]).numpy()
+        loss1 = bce(ys, model(xs)[:,0]).numpy()
         lossL.append(loss1)
         thres = np.mean(lossL) - 1.65 * np.std(lossL)
         if loss1 < thres or iter - lastsave == 50:
@@ -62,11 +71,11 @@ def train():
         if len(lossL) == 200:
             lossL = lossL[1:]
 
-        model.fit(cards, y,
+        model.fit(xs, ys,
                   batch_size=param.batch_size,
                   epochs=1,
                   verbose=0)
-        # loss2 = bce(y, model(cards)[:,0]).numpy()
+        # loss2 = bce(y, model(xs)[:,0]).numpy()
         print(datetime.now(), iter, np.round(thres, 3), np.round(np.mean(lossL), 3))
         iter += 1
 

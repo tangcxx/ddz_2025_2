@@ -1,14 +1,14 @@
+#%% 
 import numpy as np 
 import keras as k 
 import rules
 
 to_categorical = k.utils.to_categorical
 
-NCARDGROUPS = 6  ##神经网络输入牌组数量
+NCARDGROUPS = 3  ##神经网络输入牌组数量
 CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
 NCARDSPARAM = NCARDGROUPS * CARD_DIM  ##代表牌组的输入的长度
-NCARDBIT = 5  ## 每种牌（牌组的每一项）用几位表示
-NCHANNEL = 8
+NCHANNEL = 9
 
 ##使用神经网络出牌的作弊机器人，它知道其他玩家手上的牌
 ## BOT类是演示用的，供ARENA类调用
@@ -23,12 +23,19 @@ class BOT:
     @classmethod
     def createmodel(cls):
         inputs = k.layers.Input(shape=(NCARDGROUPS, CARD_DIM, NCHANNEL,))
-        x = k.layers.Conv2D(128, (1, CARD_DIM), activation="relu")(inputs)
+
+        x = k.layers.Conv2D(512, (1, CARD_DIM))(inputs)
         x = k.layers.BatchNormalization()(x)
-        x = k.layers.Conv2D(128, (NCARDGROUPS, 1), activation="relu")(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
+
+        x = k.layers.Conv2D(512, (NCARDGROUPS, 1))(x)
         x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
+
         x = k.layers.Flatten()(x)
-        x = k.layers.Dense(128, activation="relu")(x)
+        x = k.layers.Dense(256, activation="relu")(x)
         outputs = k.layers.Dense(1, activation="sigmoid")(x)
         model = k.models.Model(inputs, outputs)
         model.compile(loss="binary_crossentropy",
@@ -58,20 +65,21 @@ class BOT:
     @classmethod
     def getdata(cls, arena):
         data = np.zeros((NCARDGROUPS, CARD_DIM, NCHANNEL), int)  ##创建工为NCARDSPARAM的数组，保存另一些局面数据
-        data[0, :, 0:5] = to_categorical(arena.remain[0], NCARDBIT)
-        data[1, :, 0:5] = to_categorical(arena.remain[1], NCARDBIT)
-        data[2, :, 0:5] = to_categorical(arena.remain[2], NCARDBIT)
-        data[3, :, 0:5] = to_categorical(arena.lastplay[0], NCARDBIT)
-        data[4, :, 0:5] = to_categorical(arena.lastplay[1], NCARDBIT)
-        data[5, :, 0:5] = to_categorical(arena.lastplay[2], NCARDBIT)
-        data[:, :, 5:8] = to_categorical(arena.pos, 3)
+        
+        for pos in range(3):
+            for num in range(4):
+                data[pos, :, num] = (arena.remain[pos] > num)
+                if pos != arena.pos:
+                    data[pos, :, num+4] = (arena.lastplay[pos] > num)
+            if pos == arena.pos:
+                data[pos, :, 8] = 1
         data.shape = (1, NCARDGROUPS, CARD_DIM, NCHANNEL)
+        
         return data
 
     def eval(self, arena=None):
         arena = arena or self.arena
         data = self.getdata(arena)
-        # return self.model.predict(data, verbose = 0)[0, 0]
         return self.model(data)[0, 0].numpy()
 
 
@@ -132,3 +140,5 @@ class BOT:
                 break
 
 
+
+# %%
