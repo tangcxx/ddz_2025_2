@@ -1,0 +1,9 @@
+*.hdf5
+*.h5
+*.keras
+*.swp
+/pb/
+/.ipynb_checkpoints/
+/__pycache__/
+/weights/
+.gitattributes
