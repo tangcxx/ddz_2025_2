@@ -1,5 +1,4 @@
 #使用所有样本
-#效果似乎比基础模型好
 #%%
 import keras as k
 import numpy as np 
@@ -20,9 +19,9 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_base import BOT
+from bot_small_kernel import BOT
 from arena import ARENA
-param = PARAM("model_base_allrecords", ARENA, BOT, iterstart=0)
+param = PARAM("model_small_kernel", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args

@@ -1,5 +1,4 @@
 #使用所有样本
-#效果似乎比基础模型好
 #%%
 import keras as k
 import numpy as np 
@@ -7,27 +6,27 @@ import multiprocessing as mp
 from datetime import datetime
 
 class PARAM:
-    def __init__(self, modelpath, ARENA, BOT, iterstart=0, nproc=8, epsilonstep=0.999, epsilonmin=0.01, learning_rate=None, batch_size=32):
+    def __init__(self, modelpath, ARENA, BOT, iterstart=0, nproc=8, temp_step=0.999, temp_min=0.01, learning_rate=None, batch_size=32):
         self.BOT = BOT
         self.ARENA = ARENA
         self.iterstart = iterstart
         self.nproc = nproc
-        self.epsilonstep = epsilonstep
-        self.epsilonmin = epsilonmin
+        self.temp_step = temp_step
+        self.temp_min = temp_min
         self.learning_rate = learning_rate
         self.batch_size = batch_size
         self.modelpath = modelpath
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_base import BOT
+from bot_anneal import BOT
 from arena import ARENA
-param = PARAM("model_base_allrecords", ARENA, BOT, iterstart=0)
+param = PARAM("model_small_kernel", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
-    ws, epsilon = args
+    ws, temperature = args
     param.model_sub.set_weights(ws)
-    bot = param.BOT(model=param.model_sub, epsilon=epsilon)
+    bot = param.BOT(model=param.model_sub, temperature=temperature)
     arena = param.ARENA(RECORD=True)
     arena.registerbot([bot, bot, bot])
     arena.wholegame()
@@ -57,8 +56,8 @@ def train():
         model.compile(loss="binary_crossentropy",
                       optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
     while True:
-        epsilon = max(param.epsilonstep ** iter, param.epsilonmin)
-        res = p.map(selfplay, [(model.get_weights(), epsilon)] * 8)
+        temperature = max(param.temp_step ** iter, param.temp_min)
+        res = p.map(selfplay, [(model.get_weights(), temperature)] * 8)
         ys = np.concatenate([r[0] for r in res])
         xs = np.concatenate([r[1] for r in res])
 

@@ -1,16 +1,8 @@
 #%%
 import numpy as np 
 import re
-import keras as k
 
-import rules
-
-to_categorical = k.utils.to_categorical
-NCARDGROUPS = 6  ##神经网络输入牌组数量
-CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
-NCARDSPARAM = NCARDGROUPS * CARD_DIM  ##代表牌组的输入的长度
-NCARDBIT = 5  ## 每种牌（牌组的每一项）用几位表示
-NCHANNEL = 8
+from rules import CARDS, ap, playable, list2vec, vec2str
 
 #%%
 ## AI竞技场
@@ -21,7 +13,7 @@ class ARENA:
         返回值：长度54的数组
             洗牌，返回随机顺序的54张牌
         '''
-        cards = rules.CARDS.copy()  ## 复制cards副本
+        cards = CARDS.copy()  ## 复制cards副本
         np.random.shuffle(cards)  ## 随机排序
         return cards
 
@@ -30,9 +22,9 @@ class ARENA:
         self.cards = self.shuffled() if cards is None else cards
         cards = self.cards
         self.verbos = verbos
-        self.init = np.array([rules.list2vec(cards[0:20]), 
-                              rules.list2vec(cards[20:37]), 
-                              rules.list2vec(cards[37:54])], int)
+        self.init = np.array([list2vec(cards[0:20]), 
+                              list2vec(cards[20:37]), 
+                              list2vec(cards[37:54])], int)
         self.remain = self.init.copy()
         self.lastplay = np.zeros((3, 15), int)
         self.pos = 0
@@ -86,7 +78,7 @@ class ARENA:
         cards = bot.play() if cards is None else cards
         self.update(cards)
         if self.verbos & 1:
-            print("{0: >2d}".format(self.round-1), ":", [' 地主', '农民1', '农民2'][self.b1], ":", rules.vec2str(self.lastplay[self.b1]), "|", rules.vec2str(self.remain[self.b1]))
+            print("{0: >2d}".format(self.round-1), ":", [' 地主', '农民1', '农民2'][self.b1], ":", vec2str(self.lastplay[self.b1]), "|", vec2str(self.remain[self.b1]))
         for bot in self.bot:
             bot.update()
     
@@ -111,22 +103,22 @@ class ARENA:
         ## 如果上家出牌数量不为0，根据上家的上一手出牌计算当前玩家的合法出牌
         if self.lastplay[self.b1].sum() != 0:
             ##取上家上一手牌的牌型和大小
-            pretyp, prerng = rules.ap[tuple(self.lastplay[self.b1])] 
+            pretyp, prerng = ap[tuple(self.lastplay[self.b1])] 
             ##计算当前玩家所有合法出牌
-            choices, _, _ = rules.playable[1](self.remain[self.pos], None, pretyp, prerng)  
+            choices, _, _ = playable[1](self.remain[self.pos], None, pretyp, prerng)  
         
         ## 否则，根据上上家（也就是下家）的上一手出牌计算当前玩家的合法出牌
         elif self.lastplay[self.b2].sum() != 0:
             ##取上家上一手牌的牌型和大小
-            pretyp, prerng = rules.ap[tuple(self.lastplay[self.b2])]
+            pretyp, prerng = ap[tuple(self.lastplay[self.b2])]
             ##计算当前玩家所有合法出牌
-            choices, _, _ = rules.playable[1](self.remain[self.pos], None, pretyp, prerng)
+            choices, _, _ = playable[1](self.remain[self.pos], None, pretyp, prerng)
         
         ## 否则，当前玩家主手，自主出牌
         else:
-            choices, _, _ = rules.playable[0](self.remain[self.pos])
+            choices, _, _ = playable[0](self.remain[self.pos])
             
-        choices = [rules.list2vec(choice) for choice in choices]  ## 格式转换
+        choices = [list2vec(choice) for choice in choices]  ## 格式转换
         return choices
 
     ##完整的一局
@@ -167,9 +159,9 @@ class BOT_NOIAMNOTBOT:
             小王：XW
             '''
         print(tip)
-        print(" 地主:", rules.vec2str(arena.remain[0]))
-        print("农民1:", rules.vec2str(arena.remain[1]))
-        print("农民2:", rules.vec2str(arena.remain[2]))
+        print(" 地主:", vec2str(arena.remain[0]))
+        print("农民1:", vec2str(arena.remain[1]))
+        print("农民2:", vec2str(arena.remain[2]))
         print()
         self.arena = arena
         self.role = role
@@ -179,7 +171,7 @@ class BOT_NOIAMNOTBOT:
         choices = arena.getChoices()
         choices = {tuple(c) for c in choices}
 
-        print("手牌:", rules.vec2str(arena.remain[arena.pos]))
+        print("手牌:", vec2str(arena.remain[arena.pos]))
 
         d = {
             '3': 0, '4': 1, '5': 2, '6': 3, '7': 4,
