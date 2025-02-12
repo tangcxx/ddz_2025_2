@@ -19,9 +19,9 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_small_kernel import BOT
+from bot_conv import BOT
 from arena import ARENA
-param = PARAM("model_small_kernel", ARENA, BOT, iterstart=0)
+param = PARAM("model_conv", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
@@ -49,7 +49,6 @@ def train():
     p = mp.Pool(param.nproc)
     bce = k.losses.binary_crossentropy
     iter = param.iterstart
-    lastsave = iter
     lossL = []
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
     if param.learning_rate:
@@ -63,11 +62,6 @@ def train():
 
         loss1 = bce(ys, model(xs)[:,0]).numpy()
         lossL.append(loss1)
-        thres = np.mean(lossL) - 1.65 * np.std(lossL)
-        if loss1 < thres or iter - lastsave == 50:
-            model.save("{0}/m{1}.keras".format(param.modelpath, iter))
-            # model.save_weights("{0}/w{1}.weights.h5".format(param.weightpath, iter))
-            lastsave = iter
         if len(lossL) == 200:
             lossL = lossL[1:]
 
@@ -75,9 +69,12 @@ def train():
                   batch_size=param.batch_size,
                   epochs=1,
                   verbose=0)
-        # loss2 = bce(y, model(xs)[:,0]).numpy()
-        print(datetime.now(), iter, np.round(thres, 3), np.round(np.mean(lossL), 3))
+        print(datetime.now(), iter, 
+              np.round(np.mean(lossL), 3), 
+              np.round(np.mean(loss1), 3))
         iter += 1
+        if iter % 50 == 0:
+            model.save("{0}/m{1}.keras".format(param.modelpath, iter))
 
 #%%
 if __name__ == '__main__':

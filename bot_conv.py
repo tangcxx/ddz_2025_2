@@ -22,25 +22,35 @@ class BOT:
     ## 创建神经网络
     @classmethod
     def createmodel(cls):
-        inputs = k.layers.Input(shape=(NCARDGROUPS, CARD_DIM, NCHANNEL,))
+        inputs = k.layers.Input(shape=(NCARDGROUPS, 18, NCHANNEL,))
 
-        x = k.layers.Conv2D(256, (1, 3))(inputs)
+        x = k.layers.Conv2D(512, (1, 3), strides=(1,2))(inputs)
         x = k.layers.BatchNormalization()(x)
         x = k.layers.ReLU()(x)
         x = k.layers.Dropout(0.2)(x)
 
-        for _ in range(6):
-            x = k.layers.Conv2D(256, (1, 3))(x)
-            x = k.layers.BatchNormalization()(x)
-            x = k.layers.ReLU()(x)
-            x = k.layers.Dropout(0.2)(x)
+        x = k.layers.Conv2D(512, (1, 3), strides=(1,2))(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
 
-        x = k.layers.Conv2D(256, (NCARDGROUPS, 1))(x)
+        x = k.layers.Conv2D(512, (1, 3))(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
+
+        x = k.layers.Conv2D(512, (1, 1))(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
+
+        x = k.layers.Conv2D(512, (NCARDGROUPS, 1))(x)
         x = k.layers.BatchNormalization()(x)
         x = k.layers.ReLU()(x)
         x = k.layers.Dropout(0.2)(x)
 
         x = k.layers.Flatten()(x)
+
         x = k.layers.Dense(256)(x)
         x = k.layers.BatchNormalization()(x)
         x = k.layers.ReLU()(x)
@@ -75,17 +85,24 @@ class BOT:
     @classmethod
     def getdata(cls, arena):
         data = np.zeros((NCARDGROUPS, CARD_DIM, NCHANNEL), int)  ##创建工为NCARDSPARAM的数组，保存另一些局面数据
+        data2 = np.zeros((NCARDGROUPS, 18, NCHANNEL), int)
         
         for pos in range(3):
             for num in range(4):
                 data[pos, :, num] = (arena.remain[pos] > num)
                 if pos != arena.pos:
                     data[pos, :, num+4] = (arena.lastplay[pos] > num)
-            if pos == arena.pos:
-                data[pos, :, 8] = 1
-        data.shape = (1, NCARDGROUPS, CARD_DIM, NCHANNEL)
+
+        data2[:,0:12,0:8] = data[:,0:12,0:8]
+        data2[:,13,0:8] = data[:,12,0:8]
+        data2[:,15,0:8] = data[:,13,0:8]
+        data2[:,17,0:8] = data[:,14,0:8]
+
+        data2[arena.pos, :, 8] = 1
+
+        data2.shape = (1, NCARDGROUPS, 18, NCHANNEL)
         
-        return data
+        return data2
 
     def eval(self, arena=None):
         arena = arena or self.arena
@@ -102,17 +119,17 @@ class BOT:
             出这一手的局面估值最高
         '''
         
-        ## 调用netscores计算choices里每种出牌后的局面估值
-        scores = self.netscores(choices)
+        ## 调用 get_dizhu_win_probs 计算choices里每种出牌后的局面估值
+        dizhu_win_probs = self.get_dizhu_win_probs(choices)
         if self.arena.pos == 0:
-            idx = np.argmax(scores)  ## 找到最大的那一项的序号（下标）
+            idx = np.argmax(dizhu_win_probs)  ## 找到最大的那一项的序号（下标）
         else:
-            idx = np.argmin(scores)
+            idx = np.argmin(dizhu_win_probs)
         if self.verbos & 1:
             self.showChoices(5)
         return choices[idx]
 
-    def netscores(self, choices):
+    def get_dizhu_win_probs(self, choices):
         '''
         choices: 列表，每一项是长度15的数组
             所有合法出牌
@@ -120,15 +137,15 @@ class BOT:
         返回值：和choices一样长的列表，每一项是数字（浮点，0到1之间）
             对应每一种出牌后的局面估值
         '''
-        scores = []  ##保存返回值
+        xs = []
         ##循环每一种出牌
         for choice in choices: 
-            # print("choice ", rules.vec2str(choice))
+            # print("choice ", vec2str(choice))
             cp = self.arena.copy()  ##复制当前状态，后续操作在副本上进行，避免破坏当前状态
             cp.update(choice)  ##出牌
-            score = self.eval(cp) ##估值
-            scores.append(score) ##将估值添加到列表里
-        return scores
+            xs.append(self.getdata(cp))
+        xs = np.concatenate(xs)
+        return self.model(xs).numpy()[:,0]
 
     ## 调试用，打印某个局面下所有的出牌选择及相应的估值
     def showChoices(self, NUM=None):

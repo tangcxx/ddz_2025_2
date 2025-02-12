@@ -12,7 +12,7 @@ NCHANNEL = 9
 ## BOT类是演示用的，供ARENA类调用
 ## ARENA类要求所有BOT有如下4个成员函数
 class BOT:
-    def __init__(self, model, verbos=0, temperature=0.0):
+    def __init__(self, model, verbos=0, temperature=0):
         self.model = model
         self.verbos = verbos
         self.temperature = temperature
@@ -20,36 +20,26 @@ class BOT:
     ## 创建神经网络
     @classmethod
     def createmodel(cls):
-        inputs = k.layers.Input(shape=(NCARDGROUPS, 18, NCHANNEL,))
+        inputs = k.layers.Input(shape=(NCARDGROUPS, CARD_DIM, NCHANNEL,))
 
-        x = k.layers.Conv2D(256, (1, 3))(inputs)
+        x = k.layers.Conv2D(512, (1, CARD_DIM))(inputs)
         x = k.layers.BatchNormalization()(x)
         x = k.layers.ReLU()(x)
         x = k.layers.Dropout(0.2)(x)
 
-        for _ in range(6):
-            x = k.layers.Conv2D(256, (1, 3))(x)
-            x = k.layers.BatchNormalization()(x)
-            x = k.layers.ReLU()(x)
-            x = k.layers.Dropout(0.2)(x)
-
-        x = k.layers.Conv2D(256, (NCARDGROUPS, 1))(x)
+        x = k.layers.Conv2D(512, (NCARDGROUPS, 1))(x)
         x = k.layers.BatchNormalization()(x)
         x = k.layers.ReLU()(x)
         x = k.layers.Dropout(0.2)(x)
 
         x = k.layers.Flatten()(x)
-        x = k.layers.Dense(256)(x)
-        x = k.layers.BatchNormalization()(x)
-        x = k.layers.ReLU()(x)
-        x = k.layers.Dropout(0.2)(x)
-        
+        x = k.layers.Dense(256, activation="relu")(x)
         outputs = k.layers.Dense(1, activation="sigmoid")(x)
         model = k.models.Model(inputs, outputs)
         model.compile(loss="binary_crossentropy",
                     optimizer="adam")
         return model
-    
+
     @classmethod
     def initmodel(cls, path):
         model = cls.createmodel()
@@ -66,28 +56,21 @@ class BOT:
 
     def update(self):
         pass
-
+    
     @classmethod
     def getdata(cls, arena):
         data = np.zeros((NCARDGROUPS, CARD_DIM, NCHANNEL), int)  ##创建工为NCARDSPARAM的数组，保存另一些局面数据
-        data2 = np.zeros((NCARDGROUPS, 18, NCHANNEL), int)
         
         for pos in range(3):
             for num in range(4):
                 data[pos, :, num] = (arena.remain[pos] > num)
                 if pos != arena.pos:
                     data[pos, :, num+4] = (arena.lastplay[pos] > num)
-
-        data2[:,0:12,0:8] = data[:,0:12,0:8]
-        data2[:,13,0:8] = data[:,12,0:8]
-        data2[:,15,0:8] = data[:,13,0:8]
-        data2[:,17,0:8] = data[:,14,0:8]
-
-        data2[arena.pos, :, 8] = 1
-
-        data2.shape = (1, NCARDGROUPS, 18, NCHANNEL)
+            if pos == arena.pos:
+                data[pos, :, 8] = 1
+        data.shape = (1, NCARDGROUPS, CARD_DIM, NCHANNEL)
         
-        return data2
+        return data
 
     def eval(self, arena=None):
         arena = arena or self.arena
@@ -111,11 +94,15 @@ class BOT:
         if self.temperature == 0:
             idx = np.argmax(scores)
         else:
-            probs = scores ** (1/self.temperature)
+            probs = scores ** (1/self.temperature) + 1e-37
             probs = probs/sum(probs)
+            # if np.any(np.isnan(probs)): #调试
+                # raise ValueError(scores, self.temperature, probs)
             idx = np.random.choice(len(probs), p=probs)
         if self.verbos & 1:
             self.showChoices(5)
+        # for score, choice in zip(scores, choices):
+        #     print("****", score, vec2str(choice))
         return choices[idx]
 
     def get_dizhu_win_prob(self, choices):
