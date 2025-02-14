@@ -138,12 +138,15 @@ class BOT:
         arena = self.arena
         choices = arena.getChoices()
         scores = []
+        xs = []
         for choice in choices:
             cp = arena.copy()
             cp.update(choice)
-            score = self.eval(cp)
-            scores.append(score)
-        scores = scores if arena.pos == 0 else 1 - np.array(scores, 'float32')
+            xs.append(self.getdata(cp))
+        xs = np.concatenate(xs)
+        scores = self.model(xs).numpy()[:,0]
+        if arena.pos != 0:
+            scores = -scores
 
         num = 0
         for i in np.argsort(scores)[::-1]:
