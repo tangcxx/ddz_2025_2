@@ -1,4 +1,7 @@
-#使用所有样本
+# 使用所有样本
+# 和 trainer_base_allrecords.py 一样, 重新训练一次作为验证
+# 目标来看，小的卷积核+更多层没用。增加探索性也没用。
+# 只能试试bootstrap了
 #%%
 import keras as k
 import numpy as np 
@@ -19,30 +22,31 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_bootstrap import BOT
+from bot_base2 import BOT
 from arena import ARENA
-param = PARAM("model_bootstrap", ARENA, BOT, iterstart=0)
+param = PARAM("model_base2", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
     param.model_sub.set_weights(ws)
     bot = param.BOT(model=param.model_sub, epsilon=epsilon)
-    arena = param.ARENA(RECORD=False)
+    arena = param.ARENA(RECORD=True)
     arena.registerbot([bot, bot, bot])
     arena.wholegame()
-    y = 1 if arena.winner == 0 else -1
-
-    xs = np.concatenate(bot.xs)
-    ys = bot.v_est_max[1:]
-    ys.append(y)
-    ys = np.array(ys)
+    y = 1 if arena.winner == 0 else 0
     
+    ys, xs = [], []
+    for _, record in enumerate(arena.records):
+        ys.append(y)
+        xs.append(param.BOT.getdata(record))
+    ys = np.array(ys)
+    xs = np.concatenate(xs)
     return [ys, xs]
 
 def train():
     mp.set_start_method('spawn')
     p = mp.Pool(param.nproc)
-    errfunc = k.losses.mean_squared_error
+    bce = k.losses.binary_crossentropy
     iter = param.iterstart
     lossL = []
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
@@ -55,7 +59,7 @@ def train():
         ys = np.concatenate([r[0] for r in res])
         xs = np.concatenate([r[1] for r in res])
 
-        loss1 = errfunc(ys, model(xs)[:,0]).numpy()
+        loss1 = bce(ys, model(xs)[:,0]).numpy()
         lossL.append(loss1)
         if len(lossL) == 200:
             lossL = lossL[1:]
