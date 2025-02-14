@@ -19,6 +19,8 @@ class BOT:
         self.verbos = verbos
         self.epsilon = epsilon
         self.xs = []
+        self.q = []
+
 
     ## 创建神经网络
     @classmethod
@@ -36,10 +38,15 @@ class BOT:
         x = k.layers.Dropout(0.2)(x)
 
         x = k.layers.Flatten()(x)
-        x = k.layers.Dense(256, activation="relu")(x)
-        outputs = k.layers.Dense(1, activation="sigmoid")(x)
+
+        x = k.layers.Dense(256)(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.2)(x)
+        
+        outputs = k.layers.Dense(1, activation="tanh")(x)
         model = k.models.Model(inputs, outputs)
-        model.compile(loss="binary_crossentropy",
+        model.compile(loss="mean_squared_error",
                     optimizer="adam")
         return model
     
@@ -51,6 +58,7 @@ class BOT:
     def initiate(self, arena, role):
         self.arena = arena
         self.xs = []
+        self.q = []
 
     def play(self):
         ## 获取所有合法出牌
@@ -82,37 +90,37 @@ class BOT:
 
     def netchoose(self, choices):
         '''
-        choices: 列表，每一项是长度15的数组
+        choices: 列表, 每一项是长度15的数组
             所有合法出牌
         
-        返回值：长度15的数组
+        返回值: 长度15的数组
             出这一手的局面估值最高
         '''
+
         if np.random.random() < self.epsilon:
             idx = np.random.choice(len(choices))
-            cp = self.arena.copy()
-            cp.update(choices[idx])
-            self.xs.append(self.getdata(cp))
-            return choices[idx]
-
-        ## 调用 get_dizhu_win_probs 计算choices里每种出牌后的局面估值
-        xs, dizhu_win_probs = self.get_dizhu_win_probs(choices)
+            choices = choices[idx:(idx+1)]
+        
+        ## 调用 get_dizhu_scores 计算choices里每种出牌后的局面估值
+        xs, dizhu_scores = self.get_dizhu_scores(choices)
         if self.arena.pos == 0:
-            idx = np.argmax(dizhu_win_probs)  ## 找到最大的那一项的序号（下标）
+            idx = np.argmax(dizhu_scores)  ## 找到最大的那一项的序号（下标）
         else:
-            idx = np.argmin(dizhu_win_probs)
+            idx = np.argmin(dizhu_scores)
+
+        self.q.append(dizhu_scores[idx])  ## 记录可能的状态评分，用于fit上一个状态
+        self.xs.append(xs[idx:(idx+1)])  ## 记录状态
+
         if self.verbos & 1:
             self.showChoices(5)
-
-        self.xs.append(xs[idx:(idx+1)])  ## 记录状态
         return choices[idx]
 
-    def get_dizhu_win_probs(self, choices):
+    def get_dizhu_scores(self, choices):
         '''
-        choices: 列表，每一项是长度15的数组
+        choices: 列表, 每一项是长度15的数组
             所有合法出牌
         
-        返回值：和choices一样长的列表，每一项是数字（浮点，0到1之间）
+        返回值: 和choices一样长的列表, 每一项是数字(浮点, 0到1之间)
             对应每一种出牌后的局面估值
         '''
         xs = []
@@ -138,7 +146,7 @@ class BOT:
         xs = np.concatenate(xs)
         scores = self.model(xs).numpy()[:,0]
         if arena.pos != 0:
-            scores = 1 - scores
+            scores = -scores
 
         num = 0
         for i in np.argsort(scores)[::-1]:

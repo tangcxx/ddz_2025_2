@@ -1,7 +1,10 @@
 # 使用所有样本
-# 和 trainer_base_allrecords.py 一样, 重新训练一次作为验证
-# 目标来看，小的卷积核+更多层没用。增加探索性也没用。
-# 只能试试bootstrap了
+# 目标来看，小的卷积核+更多层没用。增加探索性也没用。q-learning也不行。可能触发死亡三角了。
+# 以上都不如基础模型：epsilon-greedy, 输入格式3*15*9，1*15 和 3*1 卷积，用胜负作为奖励信号，训练模型预测地主胜率。
+# 试试sarsa
+# 
+
+#使用所有样本
 #%%
 import keras as k
 import numpy as np 
@@ -22,9 +25,9 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_base2 import BOT
+from bot_sarsa import BOT
 from arena import ARENA
-param = PARAM("model_base2", ARENA, BOT, iterstart=43800)
+param = PARAM("model_sarsa", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
@@ -33,16 +36,19 @@ def selfplay(args):
     arena = param.ARENA(RECORD=False)
     arena.registerbot([bot, bot, bot])
     arena.wholegame()
-    y = 1 if arena.winner == 0 else 0
-    
+    y = 1 if arena.winner == 0 else -1
+
     xs = np.concatenate(bot.xs)
-    ys = np.zeros(len(bot.xs)) + y
+    ys = bot.q[1:]
+    ys.append(y)
+    ys = np.array(ys)
+    
     return [ys, xs]
 
 def train():
     mp.set_start_method('spawn')
     p = mp.Pool(param.nproc)
-    bce = k.losses.binary_crossentropy
+    errfunc = k.losses.mean_squared_error
     iter = param.iterstart
     lossL = []
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
@@ -55,7 +61,7 @@ def train():
         ys = np.concatenate([r[0] for r in res])
         xs = np.concatenate([r[1] for r in res])
 
-        loss1 = bce(ys, model(xs)[:,0]).numpy()
+        loss1 = errfunc(ys, model(xs)[:,0]).numpy()
         lossL.append(loss1)
         if len(lossL) == 200:
             lossL = lossL[1:]

@@ -18,6 +18,7 @@ class BOT:
         self.model = model
         self.verbos = verbos
         self.epsilon = epsilon
+        self.xs = []
 
     ## 创建神经网络
     @classmethod
@@ -49,13 +50,11 @@ class BOT:
 
     def initiate(self, arena, role):
         self.arena = arena
+        self.xs = []
 
     def play(self):
         ## 获取所有合法出牌
         choices = self.arena.getChoices()
-        if np.random.random() < self.epsilon:
-            idx = np.random.choice(len(choices))
-            return choices[idx]
         ## 调用 netchoose 选择一手出牌
         return self.netchoose(choices)
 
@@ -89,15 +88,23 @@ class BOT:
         返回值：长度15的数组
             出这一手的局面估值最高
         '''
-        
+        if np.random.random() < self.epsilon:
+            idx = np.random.choice(len(choices))
+            cp = self.arena.copy()
+            cp.update(choices[idx])
+            self.xs.append(self.getdata(cp))
+            return choices[idx]
+
         ## 调用 get_dizhu_win_probs 计算choices里每种出牌后的局面估值
-        dizhu_win_probs = self.get_dizhu_win_probs(choices)
+        xs, dizhu_win_probs = self.get_dizhu_win_probs(choices)
         if self.arena.pos == 0:
             idx = np.argmax(dizhu_win_probs)  ## 找到最大的那一项的序号（下标）
         else:
             idx = np.argmin(dizhu_win_probs)
         if self.verbos & 1:
             self.showChoices(5)
+
+        self.xs.append(xs[idx:(idx+1)])  ## 记录状态
         return choices[idx]
 
     def get_dizhu_win_probs(self, choices):
@@ -116,7 +123,7 @@ class BOT:
             cp.update(choice)  ##出牌
             xs.append(self.getdata(cp))
         xs = np.concatenate(xs)
-        return self.model(xs).numpy()[:,0]
+        return xs, self.model(xs).numpy()[:,0]
 
     ## 调试用，打印某个局面下所有的出牌选择及相应的估值
     def showChoices(self, NUM=None):

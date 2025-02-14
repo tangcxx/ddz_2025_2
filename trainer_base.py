@@ -1,3 +1,7 @@
+# 使用所有样本
+# 和 trainer_base_allrecords.py 一样, 重新训练一次作为验证
+# 目标来看，小的卷积核+更多层没用。增加探索性也没用。
+# 只能试试bootstrap了
 #%%
 import keras as k
 import numpy as np 
@@ -26,21 +30,20 @@ def selfplay(args):
     ws, epsilon = args
     param.model_sub.set_weights(ws)
     bot = param.BOT(model=param.model_sub, epsilon=epsilon)
-    arena = param.ARENA(RECORD=True)
+    arena = param.ARENA(RECORD=False)
     arena.registerbot([bot, bot, bot])
     arena.wholegame()
-    nmoves = len(arena.records)
-    idx = np.random.randint(nmoves)
-    data = param.BOT.getdata(arena.records[idx])
     y = 1 if arena.winner == 0 else 0
-    return [y, data]
+    
+    xs = np.concatenate(bot.xs)
+    ys = np.zeros(len(bot.xs)) + y
+    return [ys, xs]
 
 def train():
     mp.set_start_method('spawn')
     p = mp.Pool(param.nproc)
     bce = k.losses.binary_crossentropy
     iter = param.iterstart
-    lastsave = iter
     lossL = []
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
     if param.learning_rate:
@@ -48,27 +51,25 @@ def train():
                       optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
     while True:
         epsilon = max(param.epsilonstep ** iter, param.epsilonmin)
-        res = p.map(selfplay, [(model.get_weights(), epsilon)] * param.batch_size)
-        y = np.array([r[0] for r in res])
-        cards = np.concatenate([r[1] for r in res])
+        res = p.map(selfplay, [(model.get_weights(), epsilon)] * 8)
+        ys = np.concatenate([r[0] for r in res])
+        xs = np.concatenate([r[1] for r in res])
 
-        loss1 = bce(y, model(cards)[:,0]).numpy()
+        loss1 = bce(ys, model(xs)[:,0]).numpy()
         lossL.append(loss1)
-        thres = np.mean(lossL) - 1.65 * np.std(lossL)
-        if loss1 < thres or iter - lastsave == 50:
-            model.save("{0}/m{1}.keras".format(param.modelpath, iter))
-            # model.save_weights("{0}/w{1}.weights.h5".format(param.weightpath, iter))
-            lastsave = iter
         if len(lossL) == 200:
             lossL = lossL[1:]
 
-        model.fit(cards, y,
+        model.fit(xs, ys,
                   batch_size=param.batch_size,
                   epochs=1,
                   verbose=0)
-        # loss2 = bce(y, model(cards)[:,0]).numpy()
-        print(datetime.now(), iter, np.round(thres, 3), np.round(np.mean(lossL), 3))
+        print(datetime.now(), iter, 
+              np.round(np.mean(lossL), 3), 
+              np.round(np.mean(loss1), 3))
         iter += 1
+        if iter % 50 == 0:
+            model.save("{0}/m{1}.keras".format(param.modelpath, iter))
 
 #%%
 if __name__ == '__main__':
