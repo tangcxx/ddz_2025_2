@@ -27,7 +27,7 @@ class PARAM:
 
 from bot_sarsa import BOT
 from arena import ARENA
-param = PARAM("model_sarsa", ARENA, BOT, iterstart=0)
+param = PARAM("model_sarsa", ARENA, BOT, iterstart=6100)
 
 def selfplay(args):
     ws, epsilon = args
@@ -55,15 +55,22 @@ def train():
     if param.learning_rate:
         model.compile(loss="binary_crossentropy",
                       optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
+    f = open("sarsa.txt", "a")
     while True:
         epsilon = max(param.epsilonstep ** iter, param.epsilonmin)
         res = p.map(selfplay, [(model.get_weights(), epsilon)] * 8)
         ys = np.concatenate([r[0] for r in res])
         xs = np.concatenate([r[1] for r in res])
 
-        loss1 = errfunc(ys, model(xs)[:,0]).numpy()
+        scores = []
+        for r in res:
+            y = np.zeros(len(r[0])) + r[0][-1]
+            scores.append(y)
+        scores = np.concatenate(scores)
+        loss1 = errfunc(scores, model(xs)[:,0]).numpy()
+
         lossL.append(loss1)
-        if len(lossL) == 200:
+        if len(lossL) == 100:
             lossL = lossL[1:]
 
         model.fit(xs, ys,
@@ -73,6 +80,7 @@ def train():
         print(datetime.now(), iter, 
               np.round(np.mean(lossL), 3), 
               np.round(np.mean(loss1), 3))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(np.mean(loss1), 3)))
         iter += 1
         if iter % 50 == 0:
             model.save("{0}/m{1}.keras".format(param.modelpath, iter))

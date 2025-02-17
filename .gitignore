@@ -1,9 +1,6 @@
-*.hdf5
-*.h5
+*.txt
 *.keras
 *.swp
-/pb/
 /.ipynb_checkpoints/
 /__pycache__/
-/weights/
 .gitattributes

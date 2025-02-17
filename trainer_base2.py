@@ -24,7 +24,7 @@ class PARAM:
 
 from bot_base2 import BOT
 from arena import ARENA
-param = PARAM("model_base2", ARENA, BOT, iterstart=43800)
+param = PARAM("model_base2", ARENA, BOT, iterstart=391350)
 
 def selfplay(args):
     ws, epsilon = args
@@ -49,6 +49,7 @@ def train():
     if param.learning_rate:
         model.compile(loss="binary_crossentropy",
                       optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
+    f = open("{}/log.txt".format(param.modelpath), "a", buffering=1)
     while True:
         epsilon = max(param.epsilonstep ** iter, param.epsilonmin)
         res = p.map(selfplay, [(model.get_weights(), epsilon)] * 8)
@@ -67,6 +68,7 @@ def train():
         print(datetime.now(), iter, 
               np.round(np.mean(lossL), 3), 
               np.round(np.mean(loss1), 3))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(np.mean(loss1), 3)))
         iter += 1
         if iter % 50 == 0:
             model.save("{0}/m{1}.keras".format(param.modelpath, iter))
