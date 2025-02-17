@@ -1,0 +1,157 @@
+#%% 
+import numpy as np 
+import keras as k 
+import rules
+
+to_categorical = k.utils.to_categorical
+
+NCARDGROUPS = 3  ##神经网络输入牌组数量
+CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
+NCARDSPARAM = NCARDGROUPS * CARD_DIM  ##代表牌组的输入的长度
+NCHANNEL = 9
+
+##使用神经网络出牌的作弊机器人，它知道其他玩家手上的牌
+## BOT类是演示用的，供ARENA类调用
+## ARENA类要求所有BOT有如下4个成员函数
+class BOT:
+    def __init__(self, model, verbos=0, epsilon=0):
+        self.model = model
+        self.verbos = verbos
+        self.epsilon = epsilon
+        self.xs = []
+
+    ## 创建神经网络
+    @classmethod
+    def createmodel(cls):
+        inputs = k.layers.Input(shape=(NCARDGROUPS, CARD_DIM, NCHANNEL,))
+
+        x = k.layers.Conv2D(512, (1, CARD_DIM))(inputs)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.5)(x)
+
+        x = k.layers.Conv2D(512, (NCARDGROUPS, 1))(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.5)(x)
+
+        x = k.layers.Flatten()(x)
+
+        x = k.layers.Dense(256)(x)
+        x = k.layers.BatchNormalization()(x)
+        x = k.layers.ReLU()(x)
+        x = k.layers.Dropout(0.5)(x)
+
+        outputs = k.layers.Dense(1, activation="sigmoid")(x)
+        model = k.models.Model(inputs, outputs)
+        model.compile(loss="binary_crossentropy",
+                    optimizer="adam")
+        return model
+    
+    @classmethod
+    def initmodel(cls, path):
+        model = cls.createmodel()
+        model.save(path)
+
+    def initiate(self, arena, role):
+        self.arena = arena
+        self.xs = []
+
+    def play(self):
+        ## 获取所有合法出牌
+        choices = self.arena.getChoices()
+        ## 调用 netchoose 选择一手出牌
+        return self.netchoose(choices)
+
+    def update(self):
+        pass
+
+    @classmethod
+    def getdata(cls, arena):
+        data = np.zeros((NCARDGROUPS, CARD_DIM, NCHANNEL), int)  ##创建工为NCARDSPARAM的数组，保存另一些局面数据
+        
+        for pos in range(3):
+            for num in range(4):
+                data[pos, :, num] = (arena.remain[pos] > num)
+                if pos != arena.pos:
+                    data[pos, :, num+4] = (arena.lastplay[pos] > num)
+        data[arena.pos, :, 8] = 1
+        data.shape = (1, NCARDGROUPS, CARD_DIM, NCHANNEL)
+        return data
+
+    def eval(self, arena=None):
+        arena = arena or self.arena
+        data = self.getdata(arena)
+        return self.model(data)[0, 0].numpy()
+
+
+    def netchoose(self, choices):
+        '''
+        choices: 列表，每一项是长度15的数组
+            所有合法出牌
+        
+        返回值：长度15的数组
+            出这一手的局面估值最高
+        '''
+        if np.random.random() < self.epsilon:
+            idx = np.random.choice(len(choices))
+            cp = self.arena.copy()
+            cp.update(choices[idx])
+            self.xs.append(self.getdata(cp))
+            return choices[idx]
+
+        ## 调用 get_dizhu_win_probs 计算choices里每种出牌后的局面估值
+        xs, dizhu_win_probs = self.get_dizhu_win_probs(choices)
+        if self.arena.pos == 0:
+            idx = np.argmax(dizhu_win_probs)  ## 找到最大的那一项的序号（下标）
+        else:
+            idx = np.argmin(dizhu_win_probs)
+        if self.verbos & 1:
+            self.showChoices(5)
+
+        self.xs.append(xs[idx:(idx+1)])  ## 记录状态
+        return choices[idx]
+
+    def get_dizhu_win_probs(self, choices):
+        '''
+        choices: 列表，每一项是长度15的数组
+            所有合法出牌
+        
+        返回值：和choices一样长的列表，每一项是数字（浮点，0到1之间）
+            对应每一种出牌后的局面估值
+        '''
+        xs = []
+        ##循环每一种出牌
+        for choice in choices: 
+            # print("choice ", vec2str(choice))
+            cp = self.arena.copy()  ##复制当前状态，后续操作在副本上进行，避免破坏当前状态
+            cp.update(choice)  ##出牌
+            xs.append(self.getdata(cp))
+        xs = np.concatenate(xs)
+        return xs, self.model(xs).numpy()[:,0]
+
+    ## 调试用，打印某个局面下所有的出牌选择及相应的估值
+    def showChoices(self, NUM=None):
+        arena = self.arena
+        choices = arena.getChoices()
+        scores = []
+        xs = []
+        for choice in choices:
+            cp = arena.copy()
+            cp.update(choice)
+            xs.append(self.getdata(cp))
+        xs = np.concatenate(xs)
+        scores = self.model(xs).numpy()[:,0]
+        if arena.pos != 0:
+            scores = 1 - scores
+
+        num = 0
+        for i in np.argsort(scores)[::-1]:
+            print(scores[i], rules.vec2str(choices[i]))
+            num += 1
+            if NUM and num == NUM:
+                break
+
+
+
+# %%
