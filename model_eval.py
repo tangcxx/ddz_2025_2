@@ -17,26 +17,26 @@ maxnum = 395300
 n_segment = maxnum//4000 + 1
 log_file = 'model_eval_base2.txt'
 model_path = 'model_base2'
-from bot_base2 import BOT_EVAL
+from bot_base2 import BOT
 
 # # sarsa: 93200
 # maxnum = 93200
 # n_segment = maxnum//4000 + 1
 # log_file = 'model_eval_sarsa.txt'
 # model_path = 'model_sarsa'
-# from bot_sarsa import BOT_EVAL
+# from bot_sarsa import BOT
 
 # # base3: 19800
 # maxnum = 19800
 # n_segment = maxnum//4000 + 1
 # log_file = 'model_eval_base3.txt'
 # model_path = 'model_base3'
-# from bot_base3 import BOT_EVAL
+# from bot_base3 import BOT
 
 def model_eval_worker(num):
-    nround = 3
-    model = k.models.load_model("{}}/m{}.keras".format(model_path, num))
-    bot = BOT_EVAL(model, verbos=0)
+    nround = 50
+    model = k.models.load_model("{}/m{}.keras".format(model_path, num))
+    bot = BOT(model, verbos=0)
 
     n_dizhu_win, n_farmer_win = 0, 0
     for _ in range(nround):
