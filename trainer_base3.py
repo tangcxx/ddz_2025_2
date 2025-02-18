@@ -46,7 +46,7 @@ def train():
     p = mp.Pool(param.nproc)
     bce = k.losses.binary_crossentropy
     iter = param.iterstart
-    lossL = []
+    lossL = np.zeros(200) - np.log(0.5)
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
     if param.learning_rate:
         model.compile(loss="binary_crossentropy",
@@ -59,9 +59,7 @@ def train():
         xs = np.concatenate([r[1] for r in res])
 
         loss1 = bce(ys, model(xs)[:,0]).numpy()
-        lossL.append(loss1)
-        if len(lossL) == 200:
-            lossL = lossL[1:]
+        lossL[iter % len(lossL)] = loss1
 
         model.fit(xs, ys,
                   batch_size=param.batch_size,
