@@ -13,28 +13,30 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # 参数
 # base2: 395300
+nround = 50
 maxnum = 395300
-n_segment = maxnum//4000 + 1
+len_segment = 80
 log_file = 'model_eval_base2.txt'
 model_path = 'model_base2'
 from bot_base2 import BOT
 
 # # sarsa: 93200
+# nround = 50
 # maxnum = 93200
-# n_segment = maxnum//4000 + 1
+# len_segment = 80
 # log_file = 'model_eval_sarsa.txt'
 # model_path = 'model_sarsa'
 # from bot_sarsa import BOT
 
 # # base3: 19800
+# nround = 50
 # maxnum = 19800
-# n_segment = maxnum//4000 + 1
+# len_segment = 80
 # log_file = 'model_eval_base3.txt'
 # model_path = 'model_base3'
 # from bot_base3 import BOT
 
 def model_eval_worker(num):
-    nround = 50
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
     bot = BOT(model, verbos=0)
 
@@ -58,14 +60,13 @@ def model_eval_worker(num):
 def model_eval():
     mp.set_start_method('spawn')
 
-    parts = np.linspace(0, maxnum//50, n_segment, dtype=int)
-    parts = (parts + 1) * 50
+    nums = np.arange(0, maxnum + 50, 50)
 
     f = open(log_file, 'w', buffering=1)
     with mp.Pool(8) as p:
-        for i in range(len(parts)-1):
-            params = np.arange(parts[i], parts[i+1], 50)
-            res = p.map(model_eval_worker, params)
+        for i in np.arange(0, len(nums), len_segment):
+            endpoint = min(i+len_segment, len(nums))
+            res = p.map(model_eval_worker, nums[i:endpoint])
             res = np.array(res)
             f.write(np.array2string(res, separator=', '))
             f.write('\n')
