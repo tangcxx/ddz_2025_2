@@ -12,29 +12,32 @@ model_rival = k.models.load_model("model_base2/m{}.keras".format(386150))
 bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # 参数
-# base2: 395300
-nround = 50
-maxnum = 395300
-len_segment = 80
-log_file = 'model_eval_base2.txt'
-model_path = 'model_base2'
-from bot_base2 import BOT
+
+# # base2: 395300
+# nround = 50
+# maxnum = 395300
+# len_segment = 80
+# log_file = 'model_eval_base2.txt'
+# model_path = 'model_base2'
+# from bot_base2 import BOT
 
 # # sarsa: 93200
 # nround = 50
 # maxnum = 93200
+# minnum = 50
 # len_segment = 80
 # log_file = 'model_eval_sarsa.txt'
 # model_path = 'model_sarsa'
 # from bot_sarsa import BOT
 
-# # base3: 19800
-# nround = 50
-# maxnum = 19800
-# len_segment = 80
-# log_file = 'model_eval_base3.txt'
-# model_path = 'model_base3'
-# from bot_base3 import BOT
+# base3: 19800
+nround = 50
+maxnum = 19800
+minnum = 50
+len_segment = 80
+log_file = 'model_eval_base3.txt'
+model_path = 'model_base3'
+from bot_base3 import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
@@ -60,9 +63,9 @@ def model_eval_worker(num):
 def model_eval():
     mp.set_start_method('spawn')
 
-    nums = np.arange(0, maxnum + 50, 50)
+    nums = np.arange(minnum, maxnum + 50, 50)
 
-    f = open(log_file, 'w', buffering=1)
+    f = open(log_file, 'a', buffering=1)
     with mp.Pool(8) as p:
         for i in np.arange(0, len(nums), len_segment):
             endpoint = min(i+len_segment, len(nums))
@@ -70,7 +73,7 @@ def model_eval():
             res = np.array(res)
             f.write(np.array2string(res, separator=', '))
             f.write('\n')
-            print(datetime.now(), res[0][0])
+            print(datetime.now(), res[-1, 0])
     f.close()
     return res
 
