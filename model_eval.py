@@ -17,27 +17,27 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # nround = 50
 # maxnum = 395300
 # len_segment = 80
-# log_file = 'model_eval_base2.txt'
+# log_file = 'model_base2/eval.txt'
 # model_path = 'model_base2'
 # from bot_base2 import BOT
 
-# # sarsa: 93200
-# nround = 50
-# maxnum = 93200
-# minnum = 50
-# len_segment = 80
-# log_file = 'model_eval_sarsa.txt'
-# model_path = 'model_sarsa'
-# from bot_sarsa import BOT
-
-# base3: 19800
+# sarsa: 93200
 nround = 50
-maxnum = 19800
+maxnum = 93200
 minnum = 50
 len_segment = 80
-log_file = 'model_eval_base3.txt'
-model_path = 'model_base3'
-from bot_base3 import BOT
+log_file = 'model_sarsa/eval.txt'
+model_path = 'model_sarsa'
+from bot_sarsa import BOT
+
+# # base3: 19800
+# nround = 50
+# maxnum = 19800
+# minnum = 50
+# len_segment = 80
+# log_file = 'model_base3/eval.txt'
+# model_path = 'model_base3'
+# from bot_base3 import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
