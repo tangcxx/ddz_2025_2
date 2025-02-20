@@ -1,10 +1,5 @@
-# 使用所有样本
-# 和 trainer_base_allrecords.py 一样, 重新训练一次作为验证
-# 目标来看，小的卷积核+更多层没用。增加探索性也没用。
-# 只能试试bootstrap了
 
-# base2基础上模型微调，dropout=0.5，补上了漏掉的 BatchNormalization
-# 测试结果略输base2，怎么办？把dropout改回0.2再试试？
+# base2基础上模型微调，dropout=0.2不变，补上了漏掉的 BatchNormalization
 #%%
 import keras as k
 import numpy as np 
@@ -25,9 +20,9 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
-from bot_base3 import BOT
+from bot_base4 import BOT
 from arena import ARENA
-param = PARAM("model_base3", ARENA, BOT, iterstart=0)
+param = PARAM("model_base4", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
