@@ -17,7 +17,6 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # nround = 50
 # maxnum = 395300
 # len_segment = 80
-# log_file = 'model_base2/eval.txt'
 # model_path = 'model_base2'
 # from bot_base2 import BOT
 
@@ -26,7 +25,6 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # maxnum = 93200
 # minnum = 50
 # len_segment = 80
-# log_file = 'model_sarsa/eval.txt'
 # model_path = 'model_sarsa'
 # from bot_sarsa import BOT
 
@@ -35,18 +33,24 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # maxnum = 115650
 # minnum = 19850
 # len_segment = 80
-# log_file = 'model_base3/eval.txt'
 # model_path = 'model_base3'
 # from bot_base3 import BOT
 
-# base4: 19800
+# # base4: 19800
+# nround = 50
+# maxnum = 96800
+# minnum = 12050
+# len_segment = 80
+# model_path = 'model_base4'
+# from bot_base4 import BOT
+
+# aug: 19800
 nround = 50
-maxnum = 96800
-minnum = 12050
+maxnum = 18000
+minnum = 50
 len_segment = 80
-log_file = 'model_base4/eval.txt'
-model_path = 'model_base4'
-from bot_base4 import BOT
+model_path = 'model_aug'
+from bot_aug import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
@@ -75,7 +79,7 @@ def model_eval():
     nums = np.arange(minnum, maxnum + 50, 50)
     nums_segs = [nums[i:i + len_segment] for i in range(0, len(nums), len_segment)]
 
-    f = open(log_file, 'a', buffering=1)
+    f = open('{}/eval.txt'.format(model_path), 'a', buffering=1)
     with mp.Pool(8) as p:
         for nums_seg in nums_segs:
             res = p.map(model_eval_worker, nums_seg)
