@@ -1,5 +1,6 @@
 
-# base2基础上模型微调，dropout=0.2不变，补上了漏掉的 BatchNormalization
+# base2基础上模型微调，dropout=0.2不变，补上了base2最后一个隐藏层遗漏掉的 BatchNormalization 和 Dropout
+# 看上去略优于base2
 #%%
 import keras as k
 import numpy as np 

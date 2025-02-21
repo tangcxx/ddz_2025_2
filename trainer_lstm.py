@@ -1,5 +1,6 @@
-# 基于base3修改，补充人工数据
 
+# base2基础上模型微调，dropout=0.2不变，补上了base2最后一个隐藏层遗漏掉的 BatchNormalization 和 Dropout
+# 看上去略优于base2
 #%%
 import keras as k
 import numpy as np 
@@ -20,9 +21,9 @@ class PARAM:
         # self.weightpath = "{0}/weights".format(modelpath)
         self.model_sub = self.BOT.createmodel()
 
+from bot_base4 import BOT
 from arena import ARENA
-from bot_aug import BOT
-param = PARAM("model_aug", ARENA, BOT, iterstart=0)
+param = PARAM("model_base4", ARENA, BOT, iterstart=97250)
 
 def selfplay(args):
     ws, epsilon = args
