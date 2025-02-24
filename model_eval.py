@@ -1,3 +1,5 @@
+# 以 "model_base2/m{}.keras".format(386150) 为基准，评估不同训练方法的表现
+
 import multiprocessing as mp
 from datetime import datetime
 
@@ -70,7 +72,10 @@ def model_eval_worker(num):
         arena2.registerbot([bot_rival, bot, bot])
         arena2.wholegame()
         n_farmer_win += (arena2.winner != 0)
-    return num, n_dizhu_win, n_farmer_win
+        
+        total_win = n_dizhu_win + n_farmer_win
+        win_percent = total_win / (nround * 2)
+    return num, n_dizhu_win, n_farmer_win, total_win, win_percent
 
 
 def model_eval():
@@ -83,9 +88,8 @@ def model_eval():
     with mp.Pool(8) as p:
         for nums_seg in nums_segs:
             res = p.map(model_eval_worker, nums_seg)
-            res = np.array(res)
-            f.write(np.array2string(res, separator=', '))
-            f.write('\n')
+            for r in res:
+                f.write("{}\t{}\t{}\t{}\t{}\n".format(*r))
             print(datetime.now(), res[-1, 0])
     f.close()
     return res
