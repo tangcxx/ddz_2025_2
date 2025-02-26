@@ -38,21 +38,21 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # model_path = 'model_base3'
 # from bot_base3 import BOT
 
-# base4: 
-nround = 50
-maxnum = 181850
-minnum = 96850
-len_segment = 80
-model_path = 'model_base4'
-from bot_base4 import BOT
-
-# # aug: 
+# # base4: 
 # nround = 50
-# maxnum = 198750
-# minnum = 94250
+# maxnum = 181850
+# minnum = 96850
 # len_segment = 80
-# model_path = 'model_aug'
-# from bot_aug import BOT
+# model_path = 'model_base4'
+# from bot_base4 import BOT
+
+# aug: 
+nround = 50
+maxnum = 393400
+minnum = 198800
+len_segment = 80
+model_path = 'model_aug'
+from bot_aug import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
