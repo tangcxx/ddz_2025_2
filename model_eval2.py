@@ -10,9 +10,9 @@ import arena as arn
 ARENA = arn.ARENA
 
 # base4: 
-nround = 50
+nround = 1000
 nums = []
-len_segment = 80
+len_segment = 8
 model_path = 'model_base4'
 from bot_base4 import BOT
 

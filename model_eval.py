@@ -10,7 +10,7 @@ import arena as arn
 import bot_base2
 ARENA = arn.ARENA
 
-model_rival = k.models.load_model("model_base2/m{}.keras".format(386150))
+model_rival = k.models.load_model("e:/ddz_2025_2_model/model_base2/m{}.keras".format(386150))
 bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # 参数
@@ -38,21 +38,21 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # model_path = 'model_base3'
 # from bot_base3 import BOT
 
-# # base4: 
-# nround = 50
-# maxnum = 181850
-# minnum = 96850
-# len_segment = 80
-# model_path = 'model_base4'
-# from bot_base4 import BOT
-
-# aug: 
+# base4: 
 nround = 50
-maxnum = 393400
-minnum = 198800
+maxnum = 513700
+minnum = 256250
 len_segment = 80
-model_path = 'model_aug'
-from bot_aug import BOT
+model_path = 'model_base4'
+from bot_base4 import BOT
+
+# # aug: 
+# nround = 50
+# maxnum = 488750
+# minnum = 402800
+# len_segment = 80
+# model_path = 'e:/ddz_2025_2_model/model_aug'
+# from bot_aug import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
@@ -90,7 +90,7 @@ def model_eval():
             res = p.map(model_eval_worker, nums_seg)
             for r in res:
                 f.write("{}\t{}\t{}\t{}\t{}\n".format(*r))
-            print(datetime.now(), res[-1, 0])
+            print(datetime.now(), res[-1][0])
     f.close()
     return res
 

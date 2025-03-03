@@ -23,7 +23,7 @@ class PARAM:
 
 from bot_base4 import BOT
 from arena import ARENA
-param = PARAM("model_base4", ARENA, BOT, iterstart=97250)
+param = PARAM("model_base4", ARENA, BOT, iterstart=256300)
 
 def selfplay(args):
     ws, epsilon = args

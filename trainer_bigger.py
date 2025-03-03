@@ -22,8 +22,8 @@ class PARAM:
         self.model_sub = self.BOT.createmodel()
 
 from arena import ARENA
-from bot_aug import BOT
-param = PARAM("model_aug", ARENA, BOT, iterstart=395750)
+from bot_bigger import BOT
+param = PARAM("model_bigger", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
