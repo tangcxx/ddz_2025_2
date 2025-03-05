@@ -15,37 +15,6 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # 参数
 
-# # base2: 
-# nround = 50
-# maxnum = 395300
-# len_segment = 80
-# model_path = 'model_base2'
-# from bot_base2 import BOT
-
-# # sarsa: 
-# nround = 50
-# maxnum = 93200
-# minnum = 50
-# len_segment = 80
-# model_path = 'model_sarsa'
-# from bot_sarsa import BOT
-
-# # base3: 
-# nround = 50
-# maxnum = 115650
-# minnum = 19850
-# len_segment = 80
-# model_path = 'model_base3'
-# from bot_base3 import BOT
-
-# base4: 
-nround = 50
-maxnum = 513700
-minnum = 256250
-len_segment = 80
-model_path = 'model_base4'
-from bot_base4 import BOT
-
 # # aug: 
 # nround = 50
 # maxnum = 488750
@@ -53,6 +22,14 @@ from bot_base4 import BOT
 # len_segment = 80
 # model_path = 'e:/ddz_2025_2_model/model_aug'
 # from bot_aug import BOT
+
+# bigger: 
+nround = 50
+maxnum = 138050
+minnum = 82450
+len_segment = 80
+model_path = 'model_bigger'
+from bot_bigger import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))

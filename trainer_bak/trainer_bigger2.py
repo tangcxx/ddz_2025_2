@@ -1,5 +1,4 @@
-# 模型在aug基础上加了两层
-# 训练过程中整体表现优于aug，但有交叉(以base2 386150为基准)
+# 训练了1小时，模型较大，速度慢很多。效果似乎也不好。
 
 #%%
 import keras as k
@@ -22,8 +21,8 @@ class PARAM:
         self.model_sub = self.BOT.createmodel()
 
 from arena import ARENA
-from bot_bigger import BOT
-param = PARAM("model_bigger", ARENA, BOT, iterstart=82400)
+from bot_bigger2 import BOT
+param = PARAM("model_bigger2", ARENA, BOT, iterstart=0)
 
 def selfplay(args):
     ws, epsilon = args
