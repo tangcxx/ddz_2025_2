@@ -23,7 +23,7 @@ class PARAM:
 
 from arena import ARENA
 from bot_bigger import BOT
-param = PARAM("model_bigger", ARENA, BOT, iterstart=82400)
+param = PARAM("model_bigger", ARENA, BOT, iterstart=153250)
 
 def selfplay(args):
     ws, epsilon = args
@@ -46,8 +46,7 @@ def train():
     lossL = np.zeros(200) - np.log(0.5)
     model = k.models.load_model("{0}/m{1}.keras".format(param.modelpath, iter))
     if param.learning_rate:
-        model.compile(loss="binary_crossentropy",
-                      optimizer=k.optimizers.Adam(learning_rate=param.learning_rate))
+        model.optimizer.learning_rate = param.learning_rate
     f = open("{}/log.txt".format(param.modelpath), "a", buffering=1)
     while True:
         epsilon = max(param.epsilonstep ** iter, param.epsilonmin)

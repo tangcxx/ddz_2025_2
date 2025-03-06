@@ -25,11 +25,19 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # bigger: 
 nround = 50
-maxnum = 138050
-minnum = 82450
+maxnum = 153250
+minnum = 142750
 len_segment = 80
 model_path = 'model_bigger'
 from bot_bigger import BOT
+
+# # lr: 
+# nround = 50
+# maxnum = 181550
+# minnum = 142100
+# len_segment = 80
+# model_path = 'model_lr'
+# from bot_lr import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
