@@ -20,24 +20,36 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # maxnum = 488750
 # minnum = 402800
 # len_segment = 80
+# model_freq = 50
 # model_path = 'e:/ddz_2025_2_model/model_aug'
 # from bot_aug import BOT
 
-# bigger: 
-nround = 50
-maxnum = 153250
-minnum = 142750
-len_segment = 80
-model_path = 'model_bigger'
-from bot_bigger import BOT
+# # bigger: 
+# nround = 50
+# maxnum = 157300
+# minnum = 153300
+# len_segment = 80
+# model_freq = 50
+# model_path = 'model_bigger'
+# from bot_bigger import BOT
 
 # # lr: 
 # nround = 50
 # maxnum = 181550
 # minnum = 142100
 # len_segment = 80
+# model_freq = 50
 # model_path = 'model_lr'
 # from bot_lr import BOT
+
+# replay: 
+nround = 50
+maxnum = 5000
+minnum = 0
+len_segment = 80
+model_freq = 10
+model_path = 'model_replay'
+from bot_replay import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
@@ -66,7 +78,7 @@ def model_eval_worker(num):
 def model_eval():
     mp.set_start_method('spawn')
 
-    nums = np.arange(minnum, maxnum + 50, 50)
+    nums = np.arange(minnum, maxnum + model_freq, model_freq)
     nums_segs = [nums[i:i + len_segment] for i in range(0, len(nums), len_segment)]
 
     f = open('{}/eval.txt'.format(model_path), 'a', buffering=1)

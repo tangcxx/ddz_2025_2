@@ -1,5 +1,5 @@
-# bigger修改, learning_rate=0.0001, 从bigger的138050开始
-# 从 138050 开始, 分别训练 bigger 和 lr 约8小时(19000轮), lr 全面优于 bigger, 但不知道为什么lr表现起伏较大
+# bigger修改, 每批数据复用多次
+# 
 
 #%%
 import keras as k
@@ -9,21 +9,21 @@ import multiprocessing as mp
 from datetime import datetime
 
 from arena import ARENA
-from bot_lr import BOT
+from bot_replay import BOT
 
-modelpath = "model_lr"
-iterstart=142100
+modelpath = "model_replay"
+iterstart=0
 
 nproc = 8
-nmatch_per_iter = 8
+nmatch_per_iter = 32
+n_replay = 32
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01
+save_freq = 10
 
 bce = k.losses.binary_crossentropy
 model_sub = BOT.createmodel()
-
-
 
 def selfplay(args):
     ws, epsilon = args
@@ -53,27 +53,28 @@ def train():
         xs = np.concatenate([r[1] for r in res])
 
         loss1 = bce(ys, model(xs)[:,0]).numpy()
-        lossL[iter % len(lossL)] = loss1
+        lossL[(iter - iterstart) % len(lossL)] = loss1
 
         indices = list(range(ys.shape[0]))
-        np.random.shuffle(indices)
-        indices_lists = [indices[i:i + batch_size] for i in range(0, len(indices), batch_size)]
+        for _ in range(n_replay):
+            np.random.shuffle(indices)
+            indices_lists = [indices[i:i + batch_size] for i in range(0, len(indices), batch_size)]
 
-        for indices in indices_lists:
-            xs_batch = xs[indices]
-            ys_batch = ys[indices]
-            with tf.GradientTape() as tape:
-                loss = bce(ys_batch, model(xs_batch, training=True)[:,0])
-                loss = tf.reduce_mean(loss)
-            grads = tape.gradient(loss, model.trainable_variables)
-            model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
+            for indices in indices_lists:
+                xs_batch = xs[indices]
+                ys_batch = ys[indices]
+                with tf.GradientTape() as tape:
+                    loss = bce(ys_batch, model(xs_batch, training=True)[:,0])
+                    loss = tf.reduce_mean(loss)
+                grads = tape.gradient(loss, model.trainable_variables)
+                model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
         print(datetime.now(), iter, 
-              np.round(np.mean(lossL), 3), 
-              np.round(np.mean(loss1), 3))
-        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(np.mean(loss1), 3)))
+              np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3), 
+              np.round(loss1, 3))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(loss1, 3)))
         iter += 1
-        if iter % 50 == 0:
+        if iter % save_freq == 0:
             model.save("{0}/m{1}.keras".format(modelpath, iter))
 
 #%%
