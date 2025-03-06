@@ -11,14 +11,16 @@ from datetime import datetime
 from arena import ARENA
 from bot_lr import BOT
 
-modelpath = "model_lr"
-iterstart=142100
+modelpath = "model_lr2"
+# iterstart=181550
+iterstart=0
 
 nproc = 8
 nmatch_per_iter = 8
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01
+learning_rate = 0.0001
 
 bce = k.losses.binary_crossentropy
 model_sub = BOT.createmodel()
@@ -44,7 +46,7 @@ def train():
     iter = iterstart
     lossL = np.zeros(200) - np.log(0.5)
     model = k.models.load_model("{0}/m{1}.keras".format(modelpath, iter))
-    # model.optimizer.learning_rate = 0.0001
+    model.optimizer.learning_rate = learning_rate
     f = open("{}/log.txt".format(modelpath), "a", buffering=1)
     while True:
         epsilon = max(epsilonstep ** iter, epsilonmin)
@@ -53,7 +55,7 @@ def train():
         xs = np.concatenate([r[1] for r in res])
 
         loss1 = bce(ys, model(xs)[:,0]).numpy()
-        lossL[iter % len(lossL)] = loss1
+        lossL[(iter - iterstart) % len(lossL)] = loss1
 
         indices = list(range(ys.shape[0]))
         np.random.shuffle(indices)
@@ -69,9 +71,9 @@ def train():
             model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
         print(datetime.now(), iter, 
-              np.round(np.mean(lossL), 3), 
-              np.round(np.mean(loss1), 3))
-        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(np.mean(loss1), 3)))
+              np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3), 
+              np.round(loss1, 3))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(loss1, 3)))
         iter += 1
         if iter % 50 == 0:
             model.save("{0}/m{1}.keras".format(modelpath, iter))
