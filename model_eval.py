@@ -42,14 +42,24 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # model_path = 'model_lr'
 # from bot_lr import BOT
 
-# replay: 
+# # replay: 
+# nround = 50
+# maxnum = 5000
+# minnum = 0
+# len_segment = 80
+# model_freq = 10
+# model_path = 'model_replay'
+# from bot_replay import BOT
+
+# lr2: 
 nround = 50
-maxnum = 5000
-minnum = 0
+maxnum = 204400
+minnum = 141300
 len_segment = 80
-model_freq = 10
-model_path = 'model_replay'
-from bot_replay import BOT
+model_freq = 50
+model_path = 'model_lr2'
+from bot_lr import BOT
+
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))
@@ -74,6 +84,28 @@ def model_eval_worker(num):
         win_percent = total_win / (nround * 2)
     return num, n_dizhu_win, n_farmer_win, total_win, win_percent
 
+def model_eval_three_worker(num):
+    models = [k.models.load_model("{}/{}/m{}.keras".format(model_path, pos, num)) for pos in range(3)]
+    bots = [BOT(model, verbos=0) for model in models]
+
+    n_dizhu_win, n_farmer_win = 0, 0
+    for _ in range(nround):
+        cards = rules.CARDS.copy()
+        np.random.shuffle(cards)
+        
+        arena = ARENA(verbos=0, cards=cards.copy())
+        arena.registerbot([bots[0], bot_rival, bot_rival])
+        arena.wholegame()
+        n_dizhu_win += (arena.winner == 0)
+        
+        arena2 = ARENA(verbos=0, cards=cards.copy())
+        arena2.registerbot([bot_rival, bots[1], bots[2]])
+        arena2.wholegame()
+        n_farmer_win += (arena2.winner != 0)
+        
+        total_win = n_dizhu_win + n_farmer_win
+        win_percent = total_win / (nround * 2)
+    return num, n_dizhu_win, n_farmer_win, total_win, win_percent
 
 def model_eval():
     mp.set_start_method('spawn')

@@ -69,10 +69,11 @@ def train():
                 grads = tape.gradient(loss, model.trainable_variables)
                 model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
+        loss_mean = np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3)
         print(datetime.now(), iter, 
-              np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3), 
+              loss_mean, 
               np.round(loss1, 3))
-        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(loss1, 3)))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, loss_mean, np.round(loss1, 3)))
         iter += 1
         if iter % save_freq == 0:
             model.save("{0}/m{1}.keras".format(modelpath, iter))

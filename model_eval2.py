@@ -9,12 +9,12 @@ import rules
 import arena as arn
 ARENA = arn.ARENA
 
-# base4: 
-nround = 1000
-nums = []
-len_segment = 8
-model_path = 'model_base4'
-from bot_base4 import BOT
+nround = 200
+nums = [191000,190350,190400,190950,189150,189300,189450,191450,191400,
+        191300,191350,191250,191150,191200,190900,190650,190300,190750]
+len_segment = 170
+model_path = 'model_lr2'
+from bot_lr import BOT
 
 ## 以下是 model_eval2 的代码，用于继续评估模型
 def model_eval_worker2(args):
@@ -50,7 +50,7 @@ def model_eval2():
     matches = [*it.combinations(nums, 2)]
     matches_segs = [matches[i:i + len_segment] for i in range(0, len(matches), len_segment)]
 
-    f = open('{}/eval.txt'.format(model_path), 'a', buffering=1)
+    f = open('{}/eval2.txt'.format(model_path), 'a', buffering=1)
     with mp.Pool(8) as p:
         for matches_seg in matches_segs:
             res = p.map(model_eval_worker2, matches_seg)

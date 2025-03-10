@@ -1,6 +1,8 @@
 # bigger修改, learning_rate=0.0001, 从bigger的138050开始
 # 从 138050 开始, 分别训练 bigger 和 lr 约8小时(19000轮), lr 全面优于 bigger, 但不知道为什么lr表现起伏较大
 
+# lr2 从头开始以 learning_rate=1e-4 训练
+
 #%%
 import keras as k
 import tensorflow as tf
@@ -12,15 +14,14 @@ from arena import ARENA
 from bot_lr import BOT
 
 modelpath = "model_lr2"
-# iterstart=181550
-iterstart=0
+iterstart=180200
 
 nproc = 8
 nmatch_per_iter = 8
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01
-learning_rate = 0.0001
+# learning_rate = 0.0001
 
 bce = k.losses.binary_crossentropy
 model_sub = BOT.createmodel()
@@ -46,7 +47,7 @@ def train():
     iter = iterstart
     lossL = np.zeros(200) - np.log(0.5)
     model = k.models.load_model("{0}/m{1}.keras".format(modelpath, iter))
-    model.optimizer.learning_rate = learning_rate
+    # model.optimizer.learning_rate = learning_rate
     f = open("{}/log.txt".format(modelpath), "a", buffering=1)
     while True:
         epsilon = max(epsilonstep ** iter, epsilonmin)
@@ -70,10 +71,11 @@ def train():
             grads = tape.gradient(loss, model.trainable_variables)
             model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
+        loss_mean = np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3)
         print(datetime.now(), iter, 
-              np.round(np.mean(lossL[0:(iter - iterstart + 1)]), 3), 
+              loss_mean, 
               np.round(loss1, 3))
-        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, np.round(np.mean(lossL), 3), np.round(loss1, 3)))
+        f.write("{0} {1} {2} {3}\n".format(datetime.now(), iter, loss_mean, np.round(loss1, 3)))
         iter += 1
         if iter % 50 == 0:
             model.save("{0}/m{1}.keras".format(modelpath, iter))
