@@ -10,11 +10,11 @@ from datetime import datetime
 from arena import ARENA
 from bot_three import BOT
 
-modelpath = "model_three"
+modelpath = "model_three_2"
 iterstart=0
 
 nproc = 8
-nmatch_per_iter = 8
+nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01
@@ -60,7 +60,7 @@ def train():
                 yss[pos].append(r[1][pos])
         xss = [np.concatenate(xss[pos]) for pos in range(3)]
         yss = [np.concatenate(yss[pos]) for pos in range(3)]
-
+        
         loss1 = np.mean([bce(yss[pos], models[pos](xss[pos])[:,0]).numpy() for pos in range(3)])
         lossL[(iter - iterstart) % len(lossL)] = loss1
 

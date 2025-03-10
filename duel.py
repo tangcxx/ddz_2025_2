@@ -10,26 +10,21 @@ import arena as arn
 ARENA = arn.ARENA
 
 # config
-from bot_aug import BOT
-model_path = 'model_aug'
+nproc = 8
 nround = 1000
 
-matches = [(392900,393200)]
-duelists = []
-for match in matches:
-    num1, num2 = match
+import bot_lr
+path1, id1 = "model_lr2", 191000
+model1 = k.models.load_model("{}/m{}.keras".format(path1, id1))
+bot1 = bot_lr.BOT(model1, verbos=0)
 
-    model1 = k.models.load_model("{}/m{}.keras".format(model_path, num1))
-    bot1 = BOT(model1)
+import bot_aug
+path2, id2 = "e:/ddz_2025_2_model/model_aug", 488750
+model2 = k.models.load_model("{}/m{}.keras".format(path2, id2))
+bot2 = bot_aug.BOT(model2, verbos=0)
 
-    model2 = k.models.load_model("{}/m{}.keras".format(model_path, num2))
-    bot2 = BOT(model2)
-    
-    duelists.append((bot1, bot2))
-
-def model_eval_worker(ith_match):
+def model_eval_worker(args):
     n_bot1_dizhu_win, n_bot2_diuzhu_win = 0, 0
-    bot1, bot2 = duelists[ith_match]
 
     cards = rules.CARDS.copy()
     np.random.shuffle(cards)
@@ -50,12 +45,11 @@ def model_eval_worker(ith_match):
 def model_eval():
     mp.set_start_method('spawn')
 
-    with mp.Pool(8) as p:
-        for i in range(len(duelists)):
-            res = p.map(model_eval_worker, [i] * nround)
-            res = np.array(res)
-            res = np.sum(res, axis=0)
-            print("{} {} {} {} {}".format(datetime.now(), *matches[i], *res))
+    with mp.Pool(nproc) as p:
+        res = p.map(model_eval_worker, [0] * nround)
+        res = np.array(res)
+        res = np.sum(res, axis=0)
+        print("{} {} {} {} {} {} {}".format(datetime.now(), path1, id1, path2, id2, *res))
 
 if __name__ == '__main__':
     res = model_eval()

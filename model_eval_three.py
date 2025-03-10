@@ -14,56 +14,18 @@ model_rival = k.models.load_model("e:/ddz_2025_2_model/model_base2/m{}.keras".fo
 bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # 参数
-
-# # aug: 
-# nround = 50
-# maxnum = 488750
-# minnum = 402800
-# len_segment = 80
-# model_freq = 50
-# model_path = 'e:/ddz_2025_2_model/model_aug'
-# from bot_aug import BOT
-
-# # bigger: 
-# nround = 50
-# maxnum = 157300
-# minnum = 153300
-# len_segment = 80
-# model_freq = 50
-# model_path = 'model_bigger'
-# from bot_bigger import BOT
-
-# # lr: 
-# nround = 50
-# maxnum = 181550
-# minnum = 142100
-# len_segment = 80
-# model_freq = 50
-# model_path = 'model_lr'
-# from bot_lr import BOT
-
-# # replay: 
-# nround = 50
-# maxnum = 5000
-# minnum = 0
-# len_segment = 80
-# model_freq = 10
-# model_path = 'model_replay'
-# from bot_replay import BOT
-
-# lr2: 
+# three: 
 nround = 50
 maxnum = 204400
 minnum = 141300
 len_segment = 80
 model_freq = 50
-model_path = 'model_lr2'
+model_path = 'model_three'
 from bot_lr import BOT
 
-
 def model_eval_worker(num):
-    model = k.models.load_model("{}/m{}.keras".format(model_path, num))
-    bot = BOT(model, verbos=0)
+    models = [k.models.load_model("{}/{}/m{}.keras".format(model_path, pos, num)) for pos in range(3)]
+    bots = [BOT(model, verbos=0) for model in models]
 
     n_dizhu_win, n_farmer_win = 0, 0
     for _ in range(nround):
@@ -71,12 +33,12 @@ def model_eval_worker(num):
         np.random.shuffle(cards)
         
         arena = ARENA(verbos=0, cards=cards.copy())
-        arena.registerbot([bot, bot_rival, bot_rival])
+        arena.registerbot([bots[0], bot_rival, bot_rival])
         arena.wholegame()
         n_dizhu_win += (arena.winner == 0)
         
         arena2 = ARENA(verbos=0, cards=cards.copy())
-        arena2.registerbot([bot_rival, bot, bot])
+        arena2.registerbot([bot_rival, bots[1], bots[2]])
         arena2.wholegame()
         n_farmer_win += (arena2.winner != 0)
         
