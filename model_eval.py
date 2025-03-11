@@ -51,15 +51,32 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # model_path = 'model_replay'
 # from bot_replay import BOT
 
-# lr2: 
+# # lr2: 
+# nround = 50
+# maxnum = 204400
+# minnum = 141300
+# len_segment = 80
+# model_freq = 50
+# model_path = 'model_lr2'
+# from bot_lr import BOT
+
+# # scaledloss: 
+# nround = 50
+# maxnum = 5650
+# minnum = 50
+# len_segment = 80
+# model_freq = 50
+# model_path = 'model_scaledloss'
+# from bot_scaledloss import BOT
+
+# scaledloss2: 
 nround = 50
-maxnum = 204400
-minnum = 141300
+maxnum = 31300
+minnum = 6000
 len_segment = 80
 model_freq = 50
-model_path = 'model_lr2'
-from bot_lr import BOT
-
+model_path = 'model_scaledloss2'
+from bot_scaledloss import BOT
 
 def model_eval_worker(num):
     model = k.models.load_model("{}/m{}.keras".format(model_path, num))

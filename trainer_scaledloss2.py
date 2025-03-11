@@ -1,4 +1,5 @@
-# 基于lr, 基于batch的样本数量修改loss, loss_factor = loss_factor = (len(xs_batch) / batch_size
+# 和scaledloss一样, 除了 loss_factor = loss_factor = (len(xs_batch) / batch_size) ** 0.5
+# 似乎有点用, 平稳一些
 
 #%%
 import keras as k
@@ -10,8 +11,8 @@ from datetime import datetime
 from arena import ARENA
 from bot_scaledloss import BOT
 
-modelpath = "model_scaledloss"
-iterstart=5650
+modelpath = "model_scaledloss2"
+iterstart=31300
 
 nproc = 8
 nmatch_per_iter = 8
@@ -58,8 +59,7 @@ def train():
         for indices in indices_lists:
             xs_batch = xs[indices]
             ys_batch = ys[indices]
-            n_batch = len(xs_batch)
-            loss_factor = len(xs_batch) / batch_size
+            loss_factor = (len(xs_batch) / batch_size) ** 0.5
             with tf.GradientTape() as tape:
                 loss = bce(ys_batch, model(xs_batch, training=True)[:,0])
                 loss = tf.reduce_mean(loss) * loss_factor

@@ -1,4 +1,5 @@
-# 基于lr, 地主农民分三个模型
+# 基于lr , 地主农民分三个模型
+# 24局游戏更新一次
 
 #%%
 import keras as k
@@ -10,11 +11,11 @@ from datetime import datetime
 from arena import ARENA
 from bot_three import BOT
 
-modelpath = "model_three"
+modelpath = "model_three_2"
 iterstart=0
 
 nproc = 8
-nmatch_per_iter = 8
+nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01

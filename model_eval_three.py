@@ -1,4 +1,5 @@
 # 以 "model_base2/m{}.keras".format(386150) 为基准，评估不同训练方法的表现
+# 评估地主农民三个模型分开的训练方法
 
 import multiprocessing as mp
 from datetime import datetime
@@ -16,12 +17,12 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # 参数
 # three: 
 nround = 50
-maxnum = 204400
-minnum = 141300
+maxnum = 2200
+minnum = 50
 len_segment = 80
 model_freq = 50
-model_path = 'model_three'
-from bot_lr import BOT
+model_path = 'model_three_3'
+from bot_three import BOT
 
 def model_eval_worker(num):
     models = [k.models.load_model("{}/{}/m{}.keras".format(model_path, pos, num)) for pos in range(3)]

@@ -1,4 +1,4 @@
-# 基于lr, 地主农民分三个模型
+# 基于lr + scaledloss2, 地主农民分三个模型
 
 #%%
 import keras as k
@@ -10,11 +10,11 @@ from datetime import datetime
 from arena import ARENA
 from bot_three import BOT
 
-modelpath = "model_three"
+modelpath = "model_three_3"
 iterstart=0
 
 nproc = 8
-nmatch_per_iter = 8
+nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
 epsilonmin=0.01
@@ -73,9 +73,10 @@ def train():
             for indices in indices_lists:
                 xs_batch = xs[indices]
                 ys_batch = ys[indices]
+                loss_factor = (len(xs_batch) / batch_size) ** 0.5
                 with tf.GradientTape() as tape:
                     loss = bce(ys_batch, model(xs_batch, training=True)[:,0])
-                    loss = tf.reduce_mean(loss)
+                    loss = tf.reduce_mean(loss) * loss_factor
                 grads = tape.gradient(loss, model.trainable_variables)
                 model.optimizer.apply_gradients(zip(grads, model.trainable_variables))
 
