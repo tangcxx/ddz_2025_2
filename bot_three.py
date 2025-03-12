@@ -77,14 +77,13 @@ class BOT:
 
     # 0,1,2,3层: 手牌
     # 4,5,6,7: 上一轮出牌
-    # 8: 当前出牌人
-    # 9: 单张
-    # 10: 对子
-    # 11: 三张
-    # 12：炸弹
-    # 13：顺子
-    # 14: 连对
-    # 15: 飞机
+    # 8: 单张
+    # 9: 对子
+    # 10: 三张
+    # 11：炸弹
+    # 12：顺子
+    # 13: 连对
+    # 14: 飞机
     @classmethod
     def getdata(cls, arena):
         data = np.zeros((NCARDGROUPS, CARD_DIM, NCHANNEL), int)
@@ -132,13 +131,6 @@ class BOT:
 
 
     def netchoose(self, choices):
-        '''
-        choices: 列表, 每一项是长度15的数组
-            所有合法出牌
-        
-        返回值: 长度15的数组
-            出这一手的局面估值最高
-        '''
         if np.random.random() < self.epsilon:
             idx = np.random.choice(len(choices))
             cp = self.arena.copy()
@@ -159,13 +151,6 @@ class BOT:
         return choices[idx]
 
     def get_dizhu_win_probs(self, choices):
-        '''
-        choices: 列表, 每一项是长度15的数组
-            所有合法出牌
-        
-        返回值: 和choices一样长的列表, 每一项是数字(浮点, 0到1之间)
-            对应每一种出牌后的局面估值
-        '''
         xs = []
         ##循环每一种出牌
         for choice in choices: 

@@ -1,4 +1,4 @@
-# 基于lr + scaledloss2, 地主农民分三个模型
+# bot_three_opt 在 bot_three 基础上修改 getdata, 提高执行效率. 但训练速度看不出来变化
 
 #%%
 import keras as k
@@ -8,9 +8,9 @@ import multiprocessing as mp
 from datetime import datetime
 
 from arena import ARENA
-from bot_three import BOT
+from bot_three_opt import BOT
 
-modelpath = "model_three_3"
+modelpath = "model_three_opt"
 iterstart=5300
 
 nproc = 8

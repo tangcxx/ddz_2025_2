@@ -71,8 +71,8 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 
 # scaledloss2: 
 nround = 50
-maxnum = 31300
-minnum = 6000
+maxnum = 79750
+minnum = 31350
 len_segment = 80
 model_freq = 50
 model_path = 'model_scaledloss2'

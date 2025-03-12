@@ -42,6 +42,7 @@ class ARENA:
     
     def copy(self, verbos=0, RECORD=False):
         cp = object.__new__(type(self))
+        cp.init = self.init.copy()
         cp.cards = self.cards.copy()
         cp.remain = self.remain.copy()
         cp.lastplay = self.lastplay.copy()
@@ -91,9 +92,9 @@ class ARENA:
             self.winner = self.pos
         self.pos, self.b1, self.b2 = self.b2, self.pos, self.b1
         self.round += 1
+        self.history.append(cards)
         if self.RECORD:
             self.records.append(self.copy())
-        self.history.append(cards)
 
     def getChoices(self):
         '''
