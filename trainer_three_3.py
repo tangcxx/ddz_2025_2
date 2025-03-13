@@ -11,7 +11,7 @@ from arena import ARENA
 from bot_three import BOT
 
 modelpath = "model_three_3"
-iterstart=5300
+iterstart=9100
 
 nproc = 8
 nmatch_per_iter = 24
@@ -34,13 +34,14 @@ def selfplay(args):
     arena.wholegame()
     y = 1 if arena.winner == 0 else 0
     
-    xss = [[], [], []]
-    yss = [[], [], []]
+    xs = [[], [], []]
+    ys = [[], [], []]
     for pos in range(3):
-        xss[pos] = np.concatenate(bots[pos].xs)
-        yss[pos] = np.zeros(len(bots[pos].xs)) + y
+        if bots[pos].xs:
+            xs[pos] = np.concatenate(bots[pos].xs)
+            ys[pos] = np.zeros(len(bots[pos].xs)) + y
 
-    return [xss, yss]
+    return xs, ys
 
 def train():
     mp.set_start_method('spawn')
@@ -54,13 +55,12 @@ def train():
         epsilon = max(epsilonstep ** iter, epsilonmin)
         res = p.map(selfplay, [(models[0].get_weights(), models[1].get_weights(), models[2].get_weights(), epsilon)] * nmatch_per_iter)
         xss, yss = [[], [], []], [[], [], []]
-        for r in res:
-            for pos in range(3):
-                xss[pos].append(r[0][pos])
-                yss[pos].append(r[1][pos])
+        xss = [[r[0][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
+        yss = [[r[1][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
+
         xss = [np.concatenate(xss[pos]) for pos in range(3)]
         yss = [np.concatenate(yss[pos]) for pos in range(3)]
-        
+
         loss1 = np.mean([bce(yss[pos], models[pos](xss[pos])[:,0]).numpy() for pos in range(3)])
         lossL[(iter - iterstart) % len(lossL)] = loss1
 

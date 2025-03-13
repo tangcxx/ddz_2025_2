@@ -17,8 +17,8 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # 参数
 # three: 
 nround = 50
-maxnum = 2200
-minnum = 50
+maxnum = 9100
+minnum = 2250
 len_segment = 80
 model_freq = 50
 model_path = 'model_three_3'
