@@ -335,6 +335,33 @@ def playable_plane(cards, prerng = [-1, -1]): #飞机
             rngs += rng
     return (res, 11, rngs)
 
+# # 不那么怪的
+# def planewithones_length(cards, length, mini):
+#     res = []
+#     rngs = []
+#     i = mini
+#     j = i + length
+#     if np.all(cards[i:j] > 2):
+#         plane_card_list = [k for k in range(i, j)]
+#         plane = plane_card_list * 3
+        
+#         side_card_optional_list = []
+#         for k in range(15):
+#             if i <= k < j:
+#                 continue
+#             if cards[k] == 1:
+#                 side_card_optional_list.append(k)
+#             elif cards[k] >= 2:
+#                 side_card_optional_list += [k, k]
+#         sides_set = set([*itertools.combinations(side_card_optional_list, length)])
+
+#         for side in sides_set:
+#             if 13 in side and 14 in side:
+#                 continue
+#             res.append(plane + list(side))
+#             rngs.append([i, j-1])            
+#     return (res, rngs)
+
 def planewithones_length(cards, length, mini):
     res = []
     rngs = []
@@ -472,6 +499,21 @@ def withoutsidekick(hand):
         return hand
     return cards
     
+# 单张	0	15
+# 对子	1	13
+# 三个	2	13
+# 三带一	3	182
+# 三带一对	4	156
+# 炸弹	5	13
+# 王炸	6	1
+# 四带二	7	1326
+# 四带两对	8	858
+# 顺子	9	36
+# 连对	10	52
+# 飞机	11	45
+# 飞机带单张	12	49982  ## 别的应该都没问题，除了这个
+# 飞机带对子	13	2939
+# 过	999	1
 
 # allplayable = playable[0](np.array([4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 1, 1]))
 # allplayable_k = [tuple(list2vec(i)) for i in allplayable[0]] + [(0,)*15]
