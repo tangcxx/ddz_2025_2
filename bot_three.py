@@ -13,8 +13,8 @@ NCHANNEL = 15
 ## BOT类是演示用的，供ARENA类调用
 ## ARENA类要求所有BOT有如下4个成员函数
 class BOT:
-    def __init__(self, model, verbos=0, epsilon=0):
-        self.model = model
+    def __init__(self, models, verbos=0, epsilon=0):
+        self.models = models
         self.verbos = verbos
         self.epsilon = epsilon
         self.xs = []
@@ -124,12 +124,6 @@ class BOT:
         data.shape = (1, NCARDGROUPS, CARD_DIM, NCHANNEL)
         return data
 
-    def eval(self, arena=None):
-        arena = arena or self.arena
-        data = self.getdata(arena)
-        return self.model(data)[0, 0].numpy()
-
-
     def netchoose(self, choices):
         if np.random.random() < self.epsilon:
             idx = np.random.choice(len(choices))
@@ -159,7 +153,7 @@ class BOT:
             cp.update(choice)  ##出牌
             xs.append(self.getdata(cp))
         xs = np.concatenate(xs)
-        return xs, self.model(xs).numpy()[:,0]
+        return xs, self.models[self.arena.pos](xs).numpy()[:,0]
 
     ## 调试用，打印某个局面下所有的出牌选择及相应的估值
     def showChoices(self, NUM=None):
@@ -172,7 +166,7 @@ class BOT:
             cp.update(choice)
             xs.append(self.getdata(cp))
         xs = np.concatenate(xs)
-        scores = self.model(xs).numpy()[:,0]
+        scores = self.models[arena.pos](xs).numpy()[:,0]
         if arena.pos != 0:
             scores = 1 - scores
 

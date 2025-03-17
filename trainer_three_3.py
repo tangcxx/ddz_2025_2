@@ -11,7 +11,7 @@ from arena import ARENA
 from bot_three import BOT
 
 modelpath = "model_three_3"
-iterstart=9100
+iterstart=76200
 
 nproc = 8
 nmatch_per_iter = 24
@@ -28,7 +28,7 @@ def selfplay(args):
     bots = [[], [], []]
     for pos in range(3):
         model_subs[pos].set_weights(wss[pos])
-        bots[pos] = BOT(model=model_subs[pos], epsilon=epsilon)
+        bots[pos] = BOT(models=model_subs, epsilon=epsilon)
     arena = ARENA(RECORD=False)
     arena.registerbot(bots)
     arena.wholegame()

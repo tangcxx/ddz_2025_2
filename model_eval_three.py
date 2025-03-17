@@ -17,8 +17,8 @@ bot_rival = bot_base2.BOT(model_rival, verbos=0)
 # 参数
 # three: 
 nround = 50
-maxnum = 9100
-minnum = 2250
+maxnum = 76200
+minnum = 75250
 len_segment = 80
 model_freq = 50
 model_path = 'model_three_3'
@@ -26,7 +26,7 @@ from bot_three import BOT
 
 def model_eval_worker(num):
     models = [k.models.load_model("{}/{}/m{}.keras".format(model_path, pos, num)) for pos in range(3)]
-    bots = [BOT(model, verbos=0) for model in models]
+    bots = [BOT(models, verbos=0), BOT(models, verbos=0), BOT(models, verbos=0)]
 
     n_dizhu_win, n_farmer_win = 0, 0
     for _ in range(nround):
