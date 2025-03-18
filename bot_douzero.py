@@ -84,6 +84,7 @@ weights = [torch.load("e:/DouZero-main/baselines/douzero_WP/landlord.ckpt", map_
            torch.load("e:/DouZero-main/baselines/douzero_WP/landlord_up.ckpt", map_location='cpu')]
 
 models = [LandlordLstmModel(), FarmerLstmModel(), FarmerLstmModel()]
+_ = [models[i].eval() for i in range(3)]
 
 for pos in range(3):
     models[pos].load_state_dict(weights[pos])

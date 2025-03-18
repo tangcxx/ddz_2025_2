@@ -8,17 +8,21 @@ import numpy as np
 import keras as k
 import rules
 import arena as arn
-import bot_base2
 ARENA = arn.ARENA
 
-model_rival = k.models.load_model("e:/ddz_2025_2_model/model_base2/m{}.keras".format(386150))
-bot_rival = bot_base2.BOT(model_rival, verbos=0)
+# import bot_base2
+# model_rival = k.models.load_model("e:/ddz_2025_2_model/model_base2/m{}.keras".format(386150))
+# bot_rival = bot_base2.BOT(model_rival, verbos=0)
+
+import bot_douzero
+bot_rivals = [bot_douzero.BOT(0), bot_douzero.BOT(0), bot_douzero.BOT(0)]
 
 # 参数
 # three: 
+nproc = 6
 nround = 50
-maxnum = 76200
-minnum = 75250
+maxnum = 90200
+minnum = 76200
 len_segment = 80
 model_freq = 50
 model_path = 'model_three_3'
@@ -34,12 +38,12 @@ def model_eval_worker(num):
         np.random.shuffle(cards)
         
         arena = ARENA(verbos=0, cards=cards.copy())
-        arena.registerbot([bots[0], bot_rival, bot_rival])
+        arena.registerbot([bots[0], bot_rivals[1], bot_rivals[2]])
         arena.wholegame()
         n_dizhu_win += (arena.winner == 0)
         
         arena2 = ARENA(verbos=0, cards=cards.copy())
-        arena2.registerbot([bot_rival, bots[1], bots[2]])
+        arena2.registerbot([bot_rivals[0], bots[1], bots[2]])
         arena2.wholegame()
         n_farmer_win += (arena2.winner != 0)
         
@@ -47,14 +51,14 @@ def model_eval_worker(num):
         win_percent = total_win / (nround * 2)
     return num, n_dizhu_win, n_farmer_win, total_win, win_percent
 
-def model_eval():
+def model_eval(minnum, maxnum):
     mp.set_start_method('spawn')
 
     nums = np.arange(minnum, maxnum + model_freq, model_freq)
     nums_segs = [nums[i:i + len_segment] for i in range(0, len(nums), len_segment)]
 
     f = open('{}/eval.txt'.format(model_path), 'a', buffering=1)
-    with mp.Pool(8) as p:
+    with mp.Pool(nproc) as p:
         for nums_seg in nums_segs:
             res = p.map(model_eval_worker, nums_seg)
             for r in res:
@@ -64,5 +68,5 @@ def model_eval():
     return res
 
 if __name__ == '__main__':
-    res = model_eval()
+    res = model_eval(minnum, maxnum)
 
