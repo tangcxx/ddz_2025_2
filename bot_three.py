@@ -6,10 +6,6 @@ import rules
 
 to_categorical = k.utils.to_categorical
 
-@tf.function
-def pred(model, xs):
-    return(model, xs)
-
 NCARDGROUPS = 3  ##神经网络输入牌组数量
 CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
 NCHANNEL = 15
