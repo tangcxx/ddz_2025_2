@@ -1,9 +1,14 @@
 #%% 
 import numpy as np 
 import keras as k 
+import tensorflow as tf
 import rules
 
 to_categorical = k.utils.to_categorical
+
+@tf.function
+def pred(model, xs):
+    return(model, xs)
 
 NCARDGROUPS = 3  ##神经网络输入牌组数量
 CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
@@ -125,39 +130,39 @@ class BOT:
         return data
 
     def netchoose(self, choices):
+        arena = self.arena
         if np.random.random() < self.epsilon:
             idx = np.random.choice(len(choices))
-            cp = self.arena.copy()
+            cp = arena.copy()
             cp.update(choices[idx])
             self.xs.append(self.getdata(cp))
             return choices[idx]
 
         ## 调用 get_dizhu_win_probs 计算choices里每种出牌后的局面估值
-        xs, dizhu_win_probs = self.get_dizhu_win_probs(choices)
-        if self.arena.pos == 0:
+        xs, dizhu_win_probs = self.get_dizhu_win_probs(arena, choices)
+        if arena.pos == 0:
             idx = np.argmax(dizhu_win_probs)  ## 找到最大的那一项的序号（下标）
         else:
             idx = np.argmin(dizhu_win_probs)
         if self.verbos & 1:
-            self.showChoices(5)
+            self.showChoices(arena, 5)
 
         self.xs.append(xs[idx:(idx+1)])  ## 记录状态
         return choices[idx]
 
-    def get_dizhu_win_probs(self, choices):
+    def get_dizhu_win_probs(self, arena, choices):
         xs = []
         ##循环每一种出牌
         for choice in choices: 
             # print("choice ", vec2str(choice))
-            cp = self.arena.copy()  ##复制当前状态，后续操作在副本上进行，避免破坏当前状态
+            cp = arena.copy()  ##复制当前状态，后续操作在副本上进行，避免破坏当前状态
             cp.update(choice)  ##出牌
             xs.append(self.getdata(cp))
         xs = np.concatenate(xs)
-        return xs, self.models[self.arena.pos](xs).numpy()[:,0]
+        return xs, self.models[arena.pos](xs).numpy()[:,0]
 
     ## 调试用，打印某个局面下所有的出牌选择及相应的估值
-    def showChoices(self, NUM=None):
-        arena = self.arena
+    def showChoices(self, arena, NUM=None):
         choices = arena.getChoices()
         scores = []
         xs = []
