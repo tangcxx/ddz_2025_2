@@ -10,12 +10,20 @@ NCARDGROUPS = 3  ##神经网络输入牌组数量
 CARD_DIM = rules.CARD_DIM  ## 牌组长度，15
 NCHANNEL = 15
 
+class MyModel:
+    def __init__(self, model):
+        self.model = model
+
+    @tf.function(input_signature=[tf.TensorSpec(shape=[None, 3, 15, 15], dtype=tf.float32)], reduce_retracing=True)
+    def __call__(self, xs):
+        return self.model(xs)
+
 ##使用神经网络出牌的作弊机器人，它知道其他玩家手上的牌
 ## BOT类是演示用的，供ARENA类调用
 ## ARENA类要求所有BOT有如下4个成员函数
 class BOT:
     def __init__(self, models, verbos=0, epsilon=0):
-        self.models = models
+        self.models = [MyModel(model) for model in models]
         self.verbos = verbos
         self.epsilon = epsilon
         self.xs = []
