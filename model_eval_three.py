@@ -21,8 +21,8 @@ bot_rivals = [bot_douzero.BOT(0), bot_douzero.BOT(0), bot_douzero.BOT(0)]
 # three: 
 nproc = 6
 nround = 50
-maxnum = 93550
-minnum = 90250
+maxnum = 76150
+minnum = 68050
 len_segment = 80
 model_freq = 50
 model_path = 'model_three_3'

@@ -8,13 +8,22 @@ import numpy as np
 import multiprocessing as mp
 from datetime import datetime
 
+## 模型评价
+import bot_douzero
+from rules import CARDS
+
+nround_eval = 200
+bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
+
+
 from arena import ARENA
 from bot_three_torch import BOT, Model
 
 modelpath = "model_three_torch"
-iterstart=50
+iterstart=1800
+model_freq = 100
 
-nproc = 2
+nproc = 4
 nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
@@ -46,12 +55,6 @@ def selfplay(args):
 
     return xs, ys
 
-## 模型评价
-import bot_douzero
-from rules import CARDS
-
-nround_eval = 100
-bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 
 def eval(args):
     for pos in range(3):
@@ -137,7 +140,7 @@ def train():
         print(datetime.now(), iter)
         f_log.write(f"{datetime.now()}\t{iter}\n")
         iter += 1
-        if iter % 50 == 0:
+        if iter % model_freq == 0:
             checkpoint_save(iter, models, optimizers)
 
             wins = p.map(eval, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict())] * nround_eval)

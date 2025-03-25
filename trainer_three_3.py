@@ -11,7 +11,7 @@ from arena import ARENA
 from bot_three import BOT
 
 modelpath = "model_three_3"
-iterstart=116200
+iterstart=181550
 
 nproc = 6
 nmatch_per_iter = 24
