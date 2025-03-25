@@ -1,11 +1,13 @@
-# 基于trainer_three_torch, 模型中的BatchNorm2D改为LayerNorm
+# 基于trainer_torch_ln
+# 使用 share_memory
+# 实际变慢了……
 
 #%%
 import os
 import torch
 from torch import nn
 import numpy as np 
-import multiprocessing as mp
+import torch.multiprocessing as mp
 from datetime import datetime
 
 ## 模型评价
@@ -18,11 +20,11 @@ bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 from arena import ARENA
 from bot_torch_ln import BOT, Model
 
-modelpath = "model_torch_ln"
-iterstart=7000
+modelpath = "model_torch_sharememory"
+iterstart=0
 model_freq = 100
 
-nproc = 6
+nproc = 4
 nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
@@ -31,15 +33,9 @@ epsilonmin=0.01
 bce = nn.BCELoss()
 # loss = nn.BCEWithLogitsLoss
 
-model_subs = [Model(), Model(), Model()]
-
-def selfplay(args):
-    ws_0, ws_1, ws_2, epsilon = args
-    wss = [ws_0, ws_1, ws_2]
-    bots = [[], [], []]
-    for pos in range(3):
-        model_subs[pos].load_state_dict(wss[pos])
-        bots[pos] = BOT(models=model_subs, epsilon=epsilon)
+def selfplay(model0, model1, model2, epsilon):
+    models = [model0, model1, model2]
+    bots = [BOT(models, epsilon=epsilon), BOT(models, epsilon=epsilon), BOT(models, epsilon=epsilon)]
     arena = ARENA(RECORD=False)
     arena.registerbot(bots)
     arena.wholegame()
@@ -55,10 +51,9 @@ def selfplay(args):
     return xs, ys
 
 
-def eval(args):
-    for pos in range(3):
-        model_subs[pos].load_state_dict(args[pos])
-        bots = [BOT(models=model_subs), BOT(models=model_subs), BOT(models=model_subs)]
+def eval(model0, model1, model2):
+    models = [model0, model1, model2]
+    bots = [BOT(models), BOT(models), BOT(models)]
 
     n_dizhu_win, n_farmer_win = 0, 0
 
@@ -94,11 +89,13 @@ def checkpoint_load(iter, models, optimizers):
         optimizers[pos].load_state_dict(cp["optizimers_state_dict"][pos])
 
 def train():
-    mp.set_start_method('spawn')
-    p = mp.Pool(nproc)
     iter = iterstart
     models = [Model(), Model(), Model()]
     optimizers = [torch.optim.Adam(models[pos].parameters(), lr=1e-4) for pos in range(3)]
+
+    for pos in range(3):
+        models[pos].share_memory()
+
     if iter == 0:
         os.makedirs(f"{modelpath}", exist_ok=True)
         checkpoint_save(iter, models, optimizers)
@@ -108,8 +105,12 @@ def train():
     f_log = open("{}/log.txt".format(modelpath), "a", buffering=1)
     f_eval = open("{}/eval.txt".format(modelpath), "a", buffering=1)
     while True:
+
+        # mp.set_start_method('spawn')
+        p = mp.Pool(nproc)
+
         epsilon = max(epsilonstep ** iter, epsilonmin)
-        res = p.map(selfplay, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict(), epsilon)] * nmatch_per_iter)
+        res = p.starmap(selfplay, [(models[0], models[1], models[2], epsilon) for _ in range(nmatch_per_iter)])
         xss, yss = [[], [], []], [[], [], []]
         xss = [[r[0][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
         yss = [[r[1][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
@@ -140,7 +141,7 @@ def train():
         if iter % model_freq == 0:
             checkpoint_save(iter, models, optimizers)
 
-            wins = p.map(eval, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict())] * nround_eval)
+            wins = p.starmap(eval, [(models[0], models[1], models[2]) for i in range(nround_eval)])
             wins = np.array(wins).sum(axis=0)
             wins_total = wins.sum()
             f_eval.write(f"{iter}\t{wins[0]}\t{wins[1]}\t{wins_total}\t{wins_total/(nround_eval*2)}\n")
