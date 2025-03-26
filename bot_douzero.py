@@ -79,9 +79,9 @@ class FarmerLstmModel(nn.Module):
         #         action = torch.argmax(x,dim=0)[0]
         #     return dict(action=action)
 
-weights = [torch.load("e:/DouZero-main/baselines/douzero_WP/landlord.ckpt", map_location='cpu'),
-           torch.load("e:/DouZero-main/baselines/douzero_WP/landlord_down.ckpt", map_location='cpu'),
-           torch.load("e:/DouZero-main/baselines/douzero_WP/landlord_up.ckpt", map_location='cpu')]
+weights = [torch.load("douzero_WP/landlord.ckpt", map_location='cpu'),
+           torch.load("douzero_WP/landlord_down.ckpt", map_location='cpu'),
+           torch.load("douzero_WP/landlord_up.ckpt", map_location='cpu')]
 
 models = [LandlordLstmModel(), FarmerLstmModel(), FarmerLstmModel()]
 _ = [models[i].eval() for i in range(3)]
