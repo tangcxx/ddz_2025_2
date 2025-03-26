@@ -19,7 +19,7 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_ln"
-iterstart=7000
+iterstart=30500
 model_freq = 100
 
 nproc = 6
@@ -144,6 +144,12 @@ def train():
             wins = np.array(wins).sum(axis=0)
             wins_total = wins.sum()
             f_eval.write(f"{iter}\t{wins[0]}\t{wins[1]}\t{wins_total}\t{wins_total/(nround_eval*2)}\n")
+
+        if iter % 200 == 0:
+            p.close()
+            p.join()
+            p = mp.Pool(nproc)
+
 
 
 #%%
