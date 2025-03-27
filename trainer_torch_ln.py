@@ -19,10 +19,10 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_ln"
-iterstart=30500
+iterstart=85100
 model_freq = 100
 
-nproc = 6
+nproc = 4
 nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
@@ -44,13 +44,9 @@ def selfplay(args):
     arena.registerbot(bots)
     arena.wholegame()
     y = 1 if arena.winner == 0 else 0
-    
-    xs = [[], [], []]
-    ys = [[], [], []]
-    for pos in range(3):
-        if bots[pos].xs:
-            xs[pos] = np.concatenate(bots[pos].xs)
-            ys[pos] = np.zeros(len(bots[pos].xs)) + y
+
+    xs = [bot.xs for bot in bots]
+    ys = [[y] * len(bot.xs) for bot in bots]
 
     return xs, ys
 
@@ -110,18 +106,20 @@ def train():
     while True:
         epsilon = max(epsilonstep ** iter, epsilonmin)
         res = p.map(selfplay, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict(), epsilon)] * nmatch_per_iter)
-        xss, yss = [[], [], []], [[], [], []]
-        xss = [[r[0][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
-        yss = [[r[1][pos] for r in res if len(r[0][pos])>0] for pos in range(3)]
 
-        xss = [np.concatenate(xss[pos]) for pos in range(3)]
-        yss = [np.concatenate(yss[pos]) for pos in range(3)]
+        xss, yss = [[], [], []], [[], [], []]
+        for r in res:
+            xs, ys = r
+            for pos in range(3):
+                xss[pos].extend(xs[pos])
+                yss[pos].extend(ys[pos])
 
         for xs, ys, model, optimizer in zip(xss, yss, models, optimizers):
             model.train()
             if len(ys) == 0:
                 continue
-            xs, ys = torch.from_numpy(xs).float(), torch.from_numpy(ys[:, np.newaxis]).float()
+            xs = torch.from_numpy(np.concatenate(xs)).float()
+            ys = torch.tensor(ys).reshape(-1,1).float()
             indices = list(range(ys.shape[0]))
             np.random.shuffle(indices)
             indices_lists = [indices[i:i + batch_size] for i in range(0, len(indices), batch_size)]
