@@ -19,10 +19,10 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_ln"
-iterstart=85100
+iterstart=101300
 model_freq = 100
 
-nproc = 4
+nproc = 8
 nmatch_per_iter = 24
 batch_size = 32
 epsilonstep=0.999
@@ -34,6 +34,7 @@ bce = nn.BCELoss()
 model_subs = [Model(), Model(), Model()]
 
 def selfplay(args):
+    torch.set_num_threads(1)
     ws_0, ws_1, ws_2, epsilon = args
     wss = [ws_0, ws_1, ws_2]
     bots = [[], [], []]
