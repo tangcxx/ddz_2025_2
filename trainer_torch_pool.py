@@ -19,11 +19,11 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_pool"
-iterstart=499000
+iterstart=526400
 model_freq = 100
 
 pool_size = 200
-pool_id_start=499000
+pool_id_start=526400
 
 nproc = 8
 nmatch_per_iter = 24
@@ -118,9 +118,11 @@ def train():
     while True:
         epsilon = max(epsilonstep ** iter, epsilonmin)
 
-        ids = np.random.randint(0, len(model_pools), size=3)
-        print(ids)
-        res = p.map(selfplay, [(model_pools[ids[0]][0], model_pools[ids[1]][1], model_pools[ids[2]][2], epsilon)] * nmatch_per_iter)
+        params = []
+        for _ in range(nmatch_per_iter):
+            ids = np.random.randint(0, len(model_pools), size=3)
+            params.append((model_pools[ids[0]][0], model_pools[ids[1]][1], model_pools[ids[2]][2], epsilon))
+        res = p.map(selfplay, params)
 
         xss, yss = [[], [], []], [[], [], []]
         for r in res:

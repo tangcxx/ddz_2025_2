@@ -19,7 +19,7 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_ln"
-iterstart=101300
+iterstart=526400
 model_freq = 100
 
 nproc = 8
