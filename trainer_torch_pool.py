@@ -1,4 +1,6 @@
 # 基于trainer_torch_ln, 使用模型池, 从模型池中随机抽取模型生成训练数据
+# 24局1轮，每100轮存一个checkpoint，用前200个cp对局生成数据。
+# 似乎无效
 
 #%%
 import os
@@ -19,11 +21,11 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_pool"
-iterstart=526400
+iterstart=300100
 model_freq = 100
 
 pool_size = 200
-pool_id_start=526400
+pool_id_start=300100
 
 nproc = 8
 nmatch_per_iter = 24
