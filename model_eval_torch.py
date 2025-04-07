@@ -17,11 +17,11 @@ bot_rivals = [bot_douzero.BOT(0), bot_douzero.BOT(0), bot_douzero.BOT(0)]
 # three: 
 nproc = 6
 nround = 1000
-maxid = 385400
-minid = 301000
+maxid = 654100
+minid = 500000
 len_segment = 80
 model_freq = 100
-model_path = 'model_torch_ln'
+model_path = 'model_torch_pool'
 from bot_torch_ln import BOT, Model
 
 def model_eval_worker(id):

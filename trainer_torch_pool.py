@@ -21,7 +21,7 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_torch_pool"
-iterstart=300100
+iterstart=654100
 model_freq = 100
 
 pool_size = 200
