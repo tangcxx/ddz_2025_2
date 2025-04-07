@@ -13,7 +13,7 @@ from datetime import datetime
 ## 模型评价
 import bot_douzero
 from rules import CARDS
-nround_eval = 200
+nround_eval = 1200
 bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 
 # 训练参数
