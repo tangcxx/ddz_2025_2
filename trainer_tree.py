@@ -36,8 +36,6 @@ bce = nn.BCELoss()
 
 model_subs = [Model(), Model(), Model()]
 
-
-
 def selfplay(args):
     torch.set_num_threads(1)
     ws_0, ws_1, ws_2 = args
@@ -56,7 +54,6 @@ def selfplay(args):
     xs_tree = [xs_branch]
     ys_tree = [ys_branch]
 
-    
     for a in arena.records[0:-1]:
         pos = a.pos
         choices = a.getChoices()
@@ -114,7 +111,6 @@ def eval(args):
 
     return n_dizhu_win, n_farmer_win
 
-
 def checkpoint_save(iter, models, optizimers):
     torch.save(
                     {
@@ -152,7 +148,6 @@ def train():
             for pos in range(3):
                 xss[pos].append(xs[pos])
                 yss[pos].extend(ys[pos])
-                
 
         for xs, ys, model, optimizer in zip(xss, yss, models, optimizers):
             model.train()
@@ -172,7 +167,6 @@ def train():
                 loss.backward()
                 optimizer.step()
 
-        f_log.write(f"{datetime.now()}\t{iter}\n")
         iter += 1
         if iter % model_freq == 0:
             checkpoint_save(iter, models, optimizers)
@@ -182,15 +176,13 @@ def train():
             wins_total = wins.sum()
             f_eval.write(f"{iter}\t{wins[0]}\t{wins[1]}\t{wins_total}\t{wins_total/(nround_eval*2)}\n")
         print(datetime.now(), iter)
+        f_log.write(f"{datetime.now()}\t{iter}\n")
 
         if iter % nround_pool_recycle == 0:
             p.close()
             p.join()
             p = mp.Pool(nproc)
 
-
-
 #%%
 if __name__ == '__main__':
    train()
-
