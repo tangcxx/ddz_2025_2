@@ -29,6 +29,7 @@ model_freq = 1
 nproc = 6
 nmatch_per_iter = 6
 batch_size = 32
+nround_pool_recycle = 50
 
 bce = nn.BCELoss()
 # loss = nn.BCEWithLogitsLoss
@@ -86,7 +87,7 @@ def selfplay(args):
         for pos in range(3):
             xs[pos].extend(xs_branch[pos])
             ys[pos].extend(ys_branch[pos])
-    return xs, ys, xs_tree, ys_tree
+    return xs, ys
 
 
 def eval(args):
@@ -156,7 +157,7 @@ def train():
 
         xss, yss = [[], [], []], [[], [], []]
         for r in res:
-            xs, ys, _, __ = r
+            xs, ys = r
             for pos in range(3):
                 xss[pos].extend(xs[pos])
                 yss[pos].extend(ys[pos])
@@ -190,7 +191,7 @@ def train():
             f_eval.write(f"{iter}\t{wins[0]}\t{wins[1]}\t{wins_total}\t{wins_total/(nround_eval*2)}\n")
         print(datetime.now(), iter)
 
-        if iter % 200 == 0:
+        if iter % nround_pool_recycle == 0:
             p.close()
             p.join()
             p = mp.Pool(nproc)
