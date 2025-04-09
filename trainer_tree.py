@@ -23,7 +23,7 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_tree"
-iterstart=0
+iterstart=91
 model_freq = 1
 
 nproc = 6
@@ -87,6 +87,8 @@ def selfplay(args):
         for pos in range(3):
             xs[pos].extend(xs_branch[pos])
             ys[pos].extend(ys_branch[pos])
+    for pos in range(3):
+        xs[pos] = torch.concatenate(xs[pos])
     return xs, ys
 
 
@@ -144,29 +146,19 @@ def train():
     f_eval = open("{}/eval.txt".format(modelpath), "a", buffering=1)
     while True:
         res = p.map(selfplay, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict())] * nmatch_per_iter)
-        
-        # f_debug = open(f"{modelpath}/debug.txt", "a", buffering=1)
-        # for xs, ys, xs_tree, ys_tree in res:
-        #     print(f"xs_tree: {len(xs_tree)}, ys_tree: {len(ys_tree)}")
-        #     for pos in range(3):
-        #         print(f"pos:{pos}, xs: {len(xs[pos])}, ys: {len(ys[pos])}")
-        #         f_debug.write(f"pos:{pos}\nxs:\n{xs[pos]}\nys:\n{ys[pos]}\n")
-        #     f_debug.write(f"xs_tree:\n{xs_tree}\nys_tree:\n{ys_tree}\n")        
-        # f_debug.close()
-        # break
 
         xss, yss = [[], [], []], [[], [], []]
-        for r in res:
-            xs, ys = r
+        for xs, ys in res:
             for pos in range(3):
-                xss[pos].extend(xs[pos])
+                xss[pos].append(xs[pos])
                 yss[pos].extend(ys[pos])
+                
 
         for xs, ys, model, optimizer in zip(xss, yss, models, optimizers):
             model.train()
             if len(ys) == 0:
                 continue
-            xs = torch.from_numpy(np.concatenate(xs)).float()
+            xs = torch.concatenate(xs).float()
             ys = torch.tensor(ys).reshape(-1,1).float()
             indices = list(range(ys.shape[0]))
             np.random.shuffle(indices)

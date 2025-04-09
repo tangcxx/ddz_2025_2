@@ -148,6 +148,7 @@ class BOT:
             remain_cur = remain[pos_cur] - choice
             lastplay_cur = choice
             self.getdata_pos(remain_cur, lastplay_cur, xs[idx_choice, :, pos_cur, :])
+        xs = torch.from_numpy(xs).float()
         return xs
 
     def netchoose(self, arena, choices):
@@ -170,7 +171,7 @@ class BOT:
 
     def get_dizhu_win_probs(self, arena, choices):
         xs = self.getdata(arena, choices)
-        xs = torch.from_numpy(xs).float()
+        # xs = torch.from_numpy(xs).float()
         model = self.models[arena.pos]
         model.eval()
         with torch.no_grad():
