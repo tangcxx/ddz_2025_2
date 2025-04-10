@@ -1,9 +1,6 @@
-# 基于trainer_torch_ln
-# 根据模型打牌，生成一个局面信息的序列
-# 在序列的每一步，选择所有其他可能的选项，然后再按模型打牌，生成序列
-# 一个局面信息的树，每一层有若干个子结点，对应当前局面下的不同出牌，但只有一个子结点（最高胜率的出牌）有分支，其他的都是一条线直到叶结点
-# 即先按模型生成主干，然后在主干上的每一步分出分支，每个分支不再有新的分支，而是按模型一路走到底
-# 希望具有的优点：1, 一手牌提供更多的训练数据。2, 同一个局面下的不同出牌的奖励对比能提供更有效的训练信号
+# 基于trainer_tree
+# 6核，24局一轮
+# 每一步只取5个分支（胜率最高的5手出牌）
 
 #%%
 import os
@@ -23,12 +20,12 @@ bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 from arena import ARENA
 from bot_torch_ln import BOT, Model
 
-modelpath = "model_tree"
-iterstart=197
+modelpath = "model_tree2"
+iterstart=0
 model_freq = 1
 
 nproc = 6
-nmatch_per_iter = 6
+nmatch_per_iter = 24
 batch_size = 32
 nround_pool_recycle = 50
 
@@ -62,15 +59,13 @@ def selfplay(args):
             continue
         a1 = a.copy()
         a1.registerbot([BOT(models=model_subs), BOT(models=model_subs), BOT(models=model_subs)])
-        choices = a1.getChoices()
         xs, preds = a1.bot[pos].get_dizhu_win_probs(a1, choices)
         scores = preds if pos == 0 else 1 - preds
-        indices = np.argsort(scores)[0:-1]
-        for idx in indices:
+        for idx in np.argsort(scores)[-5:-1]:
             a2 = a.copy()
             a2.registerbot([BOT(models=model_subs), BOT(models=model_subs), BOT(models=model_subs)])
             bot_pos = a2.bot[pos]
-            bot_pos.xs.append(bot_pos.getdata(arena, choices[idx:idx+1]))
+            bot_pos.xs.append(xs[idx:(idx+1)])
             a2.play(choices[idx])
             a2.wholegame()
             y = 1 if a2.winner == 0 else 0
