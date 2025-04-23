@@ -13,14 +13,14 @@ from datetime import datetime
 ## 模型评价
 import bot_douzero
 from rules import CARDS
-nround_eval = 1200
+nround_eval = 200
 bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 
 # 训练参数
 from arena import ARENA
-from bot_torch_ln import BOT, Model
+from fairbot import BOT, Model
 
-modelpath = "model_tree2"
+modelpath = "fairmodel"
 iterstart=0
 model_freq = 1
 
@@ -46,9 +46,11 @@ def selfplay(args):
     arena.wholegame()
     y = 1 if arena.winner == 0 else 0
 
+    zs_branch = [bot.zs for bot in arena.bot]
     xs_branch = [bot.xs for bot in arena.bot]
     ys_branch = [[y] * len(bot.xs) for bot in arena.bot]
     
+    zs_tree = [zs_branch]
     xs_tree = [xs_branch]
     ys_tree = [ys_branch]
 
@@ -59,30 +61,36 @@ def selfplay(args):
             continue
         a1 = a.copy()
         a1.registerbot([BOT(models=model_subs), BOT(models=model_subs), BOT(models=model_subs)])
-        xs, preds = a1.bot[pos].get_dizhu_win_probs(a1, choices)
+        zs, xs, preds = a1.bot[pos].get_dizhu_win_probs(a1, choices)
         scores = preds if pos == 0 else 1 - preds
         for idx in np.argsort(scores)[-5:-1]:
             a2 = a.copy()
             a2.registerbot([BOT(models=model_subs), BOT(models=model_subs), BOT(models=model_subs)])
             bot_pos = a2.bot[pos]
+            bot_pos.zs.append(zs[idx:(idx+1)])
             bot_pos.xs.append(xs[idx:(idx+1)])
             a2.play(choices[idx])
             a2.wholegame()
             y = 1 if a2.winner == 0 else 0
+            zs_branch = [bot.zs for bot in a2.bot]
             xs_branch = [bot.xs for bot in a2.bot]
             ys_branch = [[y] * len(bot.xs) for bot in a2.bot]
+            zs_tree.append(zs_branch)
             xs_tree.append(xs_branch)
             ys_tree.append(ys_branch)
             
+    zs = [[], [], []]
     xs = [[], [], []]
     ys = [[], [], []]
-    for xs_branch, ys_branch in zip(xs_tree, ys_tree):
+    for zs_branch, xs_branch, ys_branch in zip(zs_tree, xs_tree, ys_tree):
         for pos in range(3):
+            zs[pos].extend(zs_branch[pos])
             xs[pos].extend(xs_branch[pos])
             ys[pos].extend(ys_branch[pos])
     for pos in range(3):
+        zs[pos] = torch.concatenate(zs[pos])
         xs[pos] = torch.concatenate(xs[pos])
-    return xs, ys
+    return zs, xs, ys
 
 
 def eval(args):
@@ -139,16 +147,18 @@ def train():
     while True:
         res = p.map(selfplay, [(models[0].state_dict(), models[1].state_dict(), models[2].state_dict())] * nmatch_per_iter)
 
-        xss, yss = [[], [], []], [[], [], []]
-        for xs, ys in res:
+        zss, xss, yss = [[], [], []], [[], [], []], [[], [], []]
+        for zs, xs, ys in res:
             for pos in range(3):
+                zss[pos].append(zs[pos])
                 xss[pos].append(xs[pos])
                 yss[pos].extend(ys[pos])
 
-        for xs, ys, model, optimizer in zip(xss, yss, models, optimizers):
+        for zs, xs, ys, model, optimizer in zip(zss, xss, yss, models, optimizers):
             model.train()
             if len(ys) == 0:
                 continue
+            zs = torch.concatenate(zs).float()
             xs = torch.concatenate(xs).float()
             ys = torch.tensor(ys).reshape(-1,1).float()
             indices = list(range(ys.shape[0]))
@@ -156,10 +166,11 @@ def train():
             indices_lists = [indices[i:i + batch_size] for i in range(0, len(indices), batch_size)]
             for indices in indices_lists:
                 optimizer.zero_grad()
+                zs_batch = zs[indices]
                 xs_batch = xs[indices]
                 ys_batch = ys[indices]
                 loss_factor = (len(xs_batch) / batch_size) ** 0.5
-                loss = bce(model(xs_batch), ys_batch) * loss_factor 
+                loss = bce(model(zs_batch, xs_batch), ys_batch) * loss_factor 
                 loss.backward()
                 optimizer.step()
 
