@@ -4,7 +4,7 @@ import torch
 from torch import nn
 import rules
 
-X_LEN = 364
+X_LEN = 403
 
 onehot = {
     0: np.array([0, 0, 0, 0], np.int8),
@@ -117,10 +117,11 @@ class BOT:
 # 输入数据
 # 出牌历史
 # 底牌 54
-# 我的手牌 54
 # 其他两家手牌 54
 # 另两家最近一手出牌 2*54
 # 另两家乘余手牌 20 + 20
+# 我的手牌 54
+# 我的出牌 54
 
     def getdata(self, arena, choices):
         x = np.zeros(X_LEN, dtype=np.int8)
@@ -144,6 +145,17 @@ class BOT:
             remain_cur = remain[pos_cur] - choice
             xs[idx_choice, 256:310] = vec2onehot(remain_cur)  # 我的手牌
             xs[idx_choice, 310:364] = vec2onehot(choice) # 出牌
+            
+            for i in range(8):
+                if np.all(remain_cur[i:(i+5)] >= 1):
+                    xs[idx_choice, (364+i):(369+i)] = 1           ## 顺子 364:377
+            for i in range(10):
+                if np.all(remain_cur[i:(i+3)] >= 2):
+                    xs[idx_choice, (377+i):(380+i)] = 1           ## 连对 377:390  
+            for i in range(11):
+                if np.all(remain_cur[i:(i+2)] >= 3):
+                    xs[idx_choice, (390+i):(392+i)] = 1           ## 飞机 390:403
+
             
         z = np.zeros((15, 54), dtype=np.int8)  # 前15手出牌历史
         hs = arena.history[-15:]

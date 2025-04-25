@@ -1,7 +1,5 @@
-# 训练不作弊的AI
-# 基于trainer_tree
-# 6核，24局一轮
-# 每一步只取5个分支（胜率最高的5手出牌）
+# 基于fairtrainer
+# 128局一轮
 
 #%%
 import os
@@ -21,12 +19,12 @@ bots_rival = [bot_douzero.BOT(), bot_douzero.BOT(), bot_douzero.BOT()]
 from arena import ARENA
 from fairbot import BOT, Model
 
-modelpath = "fairmodel"
-iterstart=25
+modelpath = "fairmodel2"
+iterstart=0
 model_freq = 5
 
 nproc = 6
-nmatch_per_iter = 24
+nmatch_per_iter = 128
 batch_size = 128
 nround_pool_recycle = 50
 
