@@ -59,8 +59,8 @@ class Model(nn.Module):
 
     def forward(self, z, x):
         lstm_out, (h_n, _) = self.lstm(z)
-        h_n = h_n.squeeze(0)
-        x = torch.cat([h_n,x], dim=-1)
+        lstm_out = lstm_out[:,-1,:]
+        x = torch.cat([lstm_out,x], dim=-1)
         
         x = self.fc1(x)
         x = self.norm1(x)
