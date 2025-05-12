@@ -22,7 +22,7 @@ from arena import ARENA
 from fairbot_aug2 import BOT, Model
 
 modelpath = "fairmodel_aug2"
-iterstart=0
+iterstart=7290
 model_freq = 5
 
 nproc = 6
