@@ -22,7 +22,7 @@ from arena import ARENA
 from fairbot_aug2 import BOT, Model
 
 modelpath = "fairmodel_aug2"
-iterstart=7290
+iterstart=7805
 model_freq = 5
 
 nproc = 6
@@ -183,8 +183,8 @@ def train():
             wins = np.array(wins).sum(axis=0)
             wins_total = wins.sum()
             f_eval.write(f"{iter}\t{wins[0]}\t{wins[1]}\t{wins_total}\t{wins_total/(nround_eval*2)}\n")
-        print(datetime.now(), iter)
-        f_log.write(f"{datetime.now()}\t{iter}\n")
+        print(datetime.now(), iter, len(yss[0]), len(yss[1]), len(yss[2]))
+        f_log.write(f"{datetime.now()}\t{iter}\t{len(yss[0])}\t{len(yss[1])}\t{len(yss[2])}\n")
 
         if iter % nround_pool_recycle == 0:
             p.close()

@@ -21,8 +21,8 @@ from arena import ARENA
 from bot_torch_ln import BOT, Model
 
 modelpath = "model_tree2"
-iterstart=0
-model_freq = 1
+iterstart=37735
+model_freq = 5
 
 nproc = 6
 nmatch_per_iter = 24
