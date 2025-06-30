@@ -102,6 +102,10 @@ class BOT:
     def update(self):
         pass
 
+    
+    ## 将手牌和上一手出牌的数据编码到 output 中
+    ## remain是手牌, lastplay是上一手出牌, output 保存编码后的数据
+    ## output 是 15 * 15的数组（这里用到了python中的numpy包提供的机制，不知道其他语言中要怎么处理）
     # 0,1,2,3层: 手牌
     # 4,5,6,7: 上一轮出牌
     # 8: 单张
@@ -111,6 +115,8 @@ class BOT:
     # 12：顺子
     # 13: 连对
     # 14: 飞机
+    # 这里无论是 remain, lastplay 还是 getdata 的参数 choice, 都是长度15的数组
+    # 每一位依次对应3到大王的每一种牌，数值代表牌的数量
     def getdata_pos(self, remain, lastplay, output):
         output[0, :] = remain > 0
         output[1, :] = remain > 1
@@ -134,21 +140,37 @@ class BOT:
             if np.all(remain[i:(i+2)] >= 3):
                 output[14, i:(i+2)] = 1           ## 14
 
-    def getdata(self, arena, choices):
-        xs = np.zeros((NCHANNEL, NCARDGROUPS, CARD_DIM), np.int8)
-        remain, lastplay = arena.remain, arena.lastplay
-        pos_cur, b1, b2 = arena.pos, arena.b1, arena.b2
 
-        self.getdata_pos(remain[b1], lastplay[b1], xs[:, b1, :])
-        self.getdata_pos(remain[b2], np.zeros(15), xs[:, b2, :])
+    ## 获取模型输入
+    def getdata(self, arena, choices):  ## choices: 可能的出牌
+        ## 定义 15 * 3 * 15 的数组
+        ## 第一个数字15被称为channel(通道)的数量，每个channel代表数据的一个特征
+        ## 第二个数字3对应3个玩家
+        ## 第三个数字15对应斗地主从3到大王的15种牌
+        xs = np.zeros((NCHANNEL, NCARDGROUPS, CARD_DIM), np.int8)   
+        remain, lastplay = arena.remain, arena.lastplay  ## 手牌，上一手出牌
+        pos_cur, b1, b2 = arena.pos, arena.b1, arena.b2  ## 我的位置，上家的位置，上上家的位置
+
+        ## 上家的 手牌和上一手出牌
+        self.getdata_pos(remain[b1], lastplay[b1], xs[:, b1, :])  
         
-        xs = np.repeat(xs[np.newaxis, :], len(choices), axis=0)
+        ## 上上家的手牌，上一手出牌置0(对于作弊的AI而言，作为出牌后的局面，上上家的出牌不重要)
+        self.getdata_pos(remain[b2], np.zeros(15), xs[:, b2, :])  
         
+        ## 把 xs 复制成 len(choices) 份，因为每有一种可能的出牌，就有一种对应的出牌后的局面
+        ## 前两行已经确定了其他两个玩家的数据编码，接下来要对自己的数据进行编码
+        ## xs 从 15 * 3 * 15 变成 len(choices) * 15 * 3 * 15
+        xs = np.repeat(xs[np.newaxis, :], len(choices), axis=0)  
+        
+        ## 依次处理每种可能的出牌
         for idx_choice, choice in enumerate(choices):
+            ## 我出牌后的手牌
             remain_cur = remain[pos_cur] - choice
+            ## 我的出牌
             lastplay_cur = choice
             self.getdata_pos(remain_cur, lastplay_cur, xs[idx_choice, :, pos_cur, :])
         xs = torch.from_numpy(xs).float()
+        ## xs 是 len(choices) * 15 * 3 * 15 的数组
         return xs
 
     def netchoose(self, arena, choices):
