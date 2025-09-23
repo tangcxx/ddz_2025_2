@@ -187,6 +187,9 @@ class BOT:
         if self.verbos & 1:
             for i in np.argsort(scores)[::-1][0:5]:
                 print(scores[i], rules.vec2str(choices[i]))
+        elif self.verbos & 2:
+            for i in np.argsort(scores)[::-1]:
+                print(scores[i], rules.vec2str(choices[i]))
 
         self.xs.append(xs[idx:(idx+1)])  ## 记录状态
         return choices[idx]

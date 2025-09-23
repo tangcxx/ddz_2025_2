@@ -4,7 +4,7 @@ import bot_torch_ln
 
 #%%
 def export(id):
-        cp = torch.load(f"model_tree2/cp{id}.pt")
+        cp = torch.load(f"model_tree/cp{id}.pt")
         dummy_input = torch.randn(1, 15, 3, 15)
         for pos in range(3):
             model = bot_torch_ln.Model()
@@ -24,7 +24,7 @@ def export(id):
 )
     
 #%%
-export(101290)
+export(39005)
 
 
 # %%
