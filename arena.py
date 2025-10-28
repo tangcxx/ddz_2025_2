@@ -196,7 +196,7 @@ class BOT_NOIAMNOTBOT:
         arena = self.arena
         if arena.gameover:
             if (arena.winner == 0 and self.role == 0) or (arena.winner != 0 and self.role != 0):
-                print("你赢了。你保住了人类的面子，想必很自豪吧。")
+                print("你赢了。人类为你自豪。")
             else:
                 print("已经很不错了。大部分人类都达不到你的水平。")
         pass
